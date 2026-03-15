@@ -90,13 +90,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             ),
           ),
           SizedBox(height: 8),
-          Text(
-            'Pantau pengeluaran dan pemasukan Anda',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
-          ),
         ],
       ),
     );
@@ -256,7 +249,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Harian: Pemasukan vs Pengeluaran',
+              'Statistik Harian',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -264,13 +257,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Lihat pergerakan harian dalam bulan terpilih',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
-            ),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -462,15 +448,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Kategori Terbesar Bulan Ini',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
           if (categories.isEmpty)
             _buildEmptyCard('Belum ada data pengeluaran di bulan ini')
           else
@@ -486,11 +463,28 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         _touchedCategoryIndex >= 0 && _touchedCategoryIndex < categories.length
             ? _touchedCategoryIndex
             : -1;
-    final selected =
-        safeTouchedIndex == -1 ? null : categories[safeTouchedIndex];
+
+    // Show max 7 categories, group rest as "Lainnya"
+    final List<_CategoryExpenseData> displayCategories;
+    if (categories.length > 7) {
+      final top6 = categories.take(6).toList();
+      final othersAmount =
+          categories.skip(6).fold<double>(0, (s, c) => s + c.amount);
+      displayCategories = [
+        ...top6,
+        _CategoryExpenseData(
+          name: 'Lainnya',
+          icon: '📦',
+          color: const Color(0xFF9B9B9B),
+          amount: othersAmount,
+        ),
+      ];
+    } else {
+      displayCategories = categories;
+    }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -498,113 +492,134 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
       child: Column(
         children: [
-          SizedBox(
-            height: 184,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 168,
-                  height: 168,
-                  child: PieChart(
-                    PieChartData(
-                      pieTouchData: PieTouchData(
-                        touchCallback: (event, response) {
-                          setState(() {
-                            _touchedCategoryIndex =
-                                response?.touchedSection?.touchedSectionIndex ??
-                                    -1;
-                          });
-                        },
-                      ),
-                      centerSpaceRadius: 60,
-                      sectionsSpace: 4,
-                      sections: categories.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final category = entry.value;
-                        final isTouched = index == safeTouchedIndex;
-
-                        return PieChartSectionData(
-                          value: category.amount,
-                          color: category.color,
-                          title: '',
-                          radius: isTouched ? 66 : 64,
-                        );
-                      }).toList(),
+          // PIE CHART - styled like reference image with side legend
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Pie chart
+              SizedBox(
+                width: 160,
+                height: 160,
+                child: PieChart(
+                  PieChartData(
+                    pieTouchData: PieTouchData(
+                      touchCallback: (event, response) {
+                        setState(() {
+                          _touchedCategoryIndex =
+                              response?.touchedSection?.touchedSectionIndex ??
+                                  -1;
+                        });
+                      },
                     ),
+                    centerSpaceRadius: 36,
+                    sectionsSpace: 2,
+                    startDegreeOffset: -90,
+                    sections: displayCategories.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final category = entry.value;
+                      final isTouched = index == safeTouchedIndex;
+                      final percent = totalExpense == 0
+                          ? 0.0
+                          : category.amount / totalExpense * 100;
+
+                      return PieChartSectionData(
+                        value: category.amount,
+                        color: category.color,
+                        radius: isTouched ? 56 : 48,
+                        title: percent >= 8
+                            ? '${percent.toStringAsFixed(0)}%'
+                            : '',
+                        titleStyle: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                        titlePositionPercentageOffset: 0.65,
+                        badgeWidget: null,
+                      );
+                    }).toList(),
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.bgLight,
-                        borderRadius: BorderRadius.circular(12),
+              ),
+              const SizedBox(width: 20),
+              // Legend - like the reference image
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: displayCategories.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final category = entry.value;
+                    final percent = totalExpense == 0
+                        ? 0.0
+                        : category.amount / totalExpense * 100;
+                    final isTouched = index == safeTouchedIndex;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _touchedCategoryIndex = isTouched ? -1 : index;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isTouched
+                              ? category.color.withValues(alpha: 0.12)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: category.color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${category.name}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isTouched
+                                      ? AppTheme.textPrimary
+                                      : AppTheme.textSecondary,
+                                  fontWeight: isTouched
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              '${percent.toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: category.color,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        selected?.icon ?? '\$',
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      selected?.name ?? 'Tidak dipilih',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            children: categories.map((category) {
-              final percent =
-                  totalExpense == 0 ? 0.0 : (category.amount / totalExpense);
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: category.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: category.color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${category.name} - ${(percent * 100).toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: category.color,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          ...categories.map((category) {
+          const SizedBox(height: 20),
+          const Divider(color: AppTheme.divider, height: 1),
+          const SizedBox(height: 16),
+          // Category breakdown bars
+          ...displayCategories.map((category) {
             final percent =
                 totalExpense == 0 ? 0.0 : (category.amount / totalExpense);
             final categoryTransactions = monthTransactions

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../providers/finance_provider.dart';
 import '../models/account_model.dart';
+import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/currency_formatter.dart';
 
@@ -80,16 +81,37 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
+  /// Calculate balance for a specific account based on its transactions
+  double _getAccountBalance(FinanceProvider provider, String accountId) {
+    final accountTransactions =
+        provider.transactions.where((t) => t.accountId == accountId).toList();
+
+    double income = accountTransactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0, (sum, t) => sum + t.amount);
+    double expense = accountTransactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0, (sum, t) => sum + t.amount);
+
+    return income - expense;
+  }
+
   Widget _buildAccountsTab(FinanceProvider provider) {
     final regularAccounts = provider.regularAccounts;
-    final balance = provider.balance;
+    final savingsAccounts = provider.savingsAccounts;
+
+    // Total balance across all accounts
+    double totalBalance = 0;
+    for (final acc in [...regularAccounts, ...savingsAccounts]) {
+      totalBalance += _getAccountBalance(provider, acc.id);
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Account section header
+          // ── REGULAR ACCOUNTS ──
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -102,30 +124,40 @@ class _AccountScreenState extends State<AccountScreen> {
                 ),
               ),
               Text(
-                CurrencyFormatter.format(balance),
+                CurrencyFormatter.format(
+                  regularAccounts.fold(
+                    0.0,
+                    (sum, acc) => sum + _getAccountBalance(provider, acc.id),
+                  ),
+                ),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: balance >= 0 ? AppTheme.income : AppTheme.expense,
+                  color: AppTheme.income,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          // Regular accounts
-          ...regularAccounts
-              .map((account) => _buildAccountCard(account, provider)),
+          ...regularAccounts.map(
+            (account) => _buildAccountCard(account, provider),
+          ),
           const SizedBox(height: 8),
-          _buildAddButton('Tambahkan akun keuangan',
-              () => _showAddAccountSheet(context, AccountType.card)),
+          _buildAddButton(
+            'Tambahkan akun keuangan',
+            () => _showAddAccountSheet(context, AccountType.card),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildAccountCard(AccountModel account, FinanceProvider provider) {
-    // Calculate individual account balance
-    final accountBalance = provider.getAccountBalance(account.id);
+    final accountBalance = _getAccountBalance(provider, account.id);
+
+    // Get transaction counts for this account
+    final txCount =
+        provider.transactions.where((t) => t.accountId == account.id).length;
 
     return GestureDetector(
       onLongPress: () => _showEditAccountSheet(context, account),
@@ -146,23 +178,23 @@ class _AccountScreenState extends State<AccountScreen> {
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               decoration: BoxDecoration(
                 color: Color(account.color).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Center(
                 child: Text(
                   account.icon,
-                  style: const TextStyle(fontSize: 24),
+                  style: const TextStyle(fontSize: 26),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
@@ -180,18 +212,41 @@ class _AccountScreenState extends State<AccountScreen> {
                       ],
                     ],
                   ),
+                  const SizedBox(height: 3),
                   Text(
-                    CurrencyFormatter.format(accountBalance),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: accountBalance >= 0
-                          ? AppTheme.income
-                          : AppTheme.expense,
+                    '$txCount transaksi',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                 ],
               ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  CurrencyFormatter.format(accountBalance),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: accountBalance >= 0
+                        ? AppTheme.income
+                        : AppTheme.expense,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  accountBalance >= 0 ? 'Surplus' : 'Defisit',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: accountBalance >= 0
+                        ? AppTheme.income
+                        : AppTheme.expense,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -306,7 +361,6 @@ class _AccountScreenState extends State<AccountScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
               Center(
                 child: Container(
                   width: 40,
@@ -335,7 +389,6 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Type selector
                       if (existing == null) ...[
                         const Text('Tipe',
                             style: TextStyle(
@@ -370,7 +423,6 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      // Name
                       const Text('Nama Akun',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
@@ -388,7 +440,6 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Primary checkbox
                       CheckboxListTile(
                         value: isPrimary,
                         onChanged: (val) =>
@@ -401,7 +452,6 @@ class _AccountScreenState extends State<AccountScreen> {
                         activeColor: AppTheme.accent,
                       ),
                       const SizedBox(height: 16),
-                      // Icon picker
                       const Text('Pilih Ikon',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
@@ -438,7 +488,6 @@ class _AccountScreenState extends State<AccountScreen> {
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
-                      // Color picker
                       const Text('Pilih Warna',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
@@ -473,7 +522,6 @@ class _AccountScreenState extends State<AccountScreen> {
                         }).toList(),
                       ),
                       const SizedBox(height: 24),
-                      // Delete button
                       if (existing != null) ...[
                         SizedBox(
                           width: double.infinity,
@@ -494,7 +542,6 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         const SizedBox(height: 12),
                       ],
-                      // Save button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(

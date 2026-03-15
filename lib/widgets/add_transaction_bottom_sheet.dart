@@ -38,6 +38,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   String _note = '';
   late final TextEditingController _noteController;
 
+  // NEW: transaction type selector — default is expense
+  TransactionType _selectedType = TransactionType.expense;
+
   bool get _isEditing => widget.transaction != null;
 
   @override
@@ -51,7 +54,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       _selectedDate = t.date;
       _note = t.note ?? '';
       _noteController.text = _note;
-      // Category and Account will be set after build when we have access to provider
+      _selectedType = t.type;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final provider = context.read<FinanceProvider>();
         final categories = [
@@ -63,7 +66,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             (cat) => cat.id == t.categoryId,
             orElse: () => categories.first,
           );
-          // Set account from transaction or default
           final accounts = [
             ...provider.regularAccounts,
             ...provider.savingsAccounts
@@ -76,7 +78,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 (acc) => acc.id == t.accountId,
               );
             } catch (e) {
-              // If account not found, use primary or first account
               try {
                 _selectedAccount = accounts.firstWhere((acc) => acc.isPrimary);
               } catch (e) {
@@ -84,7 +85,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               }
             }
           } else {
-            // Use primary account or first account
             try {
               _selectedAccount = accounts.firstWhere((acc) => acc.isPrimary);
             } catch (e) {
@@ -94,9 +94,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         });
       });
     } else {
-      _selectedCategory = widget.initialCategory;
+      // If initialCategory provided, sync selected type
+      if (widget.initialCategory != null) {
+        _selectedCategory = widget.initialCategory;
+        _selectedType = widget.initialCategory!.type;
+      }
       _noteController.text = _note;
-      // Set default account after first frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final provider = context.read<FinanceProvider>();
         final accounts = [
@@ -124,10 +127,20 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     super.dispose();
   }
 
+  void _onTypeChanged(TransactionType type) {
+    if (_selectedType == type) return;
+    setState(() {
+      _selectedType = type;
+      // Reset category if it doesn't match the new type
+      if (_selectedCategory != null && _selectedCategory!.type != type) {
+        _selectedCategory = null;
+      }
+    });
+  }
+
   void _onNumberPressed(String number) {
     setState(() {
       if (_shouldResetAmount) {
-        // Start new number after operation
         _amount = number;
         _shouldResetAmount = false;
       } else if (_amount == '0') {
@@ -153,12 +166,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   void _onOperatorPressed(String operator) {
     setState(() {
-      // If there's an existing operation and user pressed new operator,
-      // calculate the previous operation first
       if (_previousValue != null && _operation != null && !_shouldResetAmount) {
         _calculate();
       }
-
       _previousValue = double.tryParse(_amount.isEmpty ? '0' : _amount);
       _operation = operator;
       _shouldResetAmount = true;
@@ -189,7 +199,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         break;
     }
 
-    // Remove trailing zeros and decimal point if not needed
     _amount = result.toString();
     if (_amount.contains('.')) {
       _amount = _amount.replaceAll(RegExp(r'\.?0+$'), '');
@@ -202,7 +211,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   void _updateDisplay() {
     if (_previousValue != null && _operation != null) {
-      // Show operation in display - only 2 numbers max
       final firstNum = _formatNumber(_previousValue!);
       final secondNum = _shouldResetAmount
           ? '0'
@@ -247,7 +255,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   void _onEqualsPressed() {
-    // Only calculate, don't save
     if (_previousValue != null && _operation != null) {
       _calculate();
     }
@@ -279,7 +286,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     final note = _noteController.text.trim();
 
     if (_isEditing) {
-      // Update existing transaction
       final transaction = TransactionModel(
         id: widget.transaction!.id,
         title: note.isEmpty ? _selectedCategory!.name : note,
@@ -308,7 +314,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         );
       }
     } else {
-      // Add new transaction
       final transaction = TransactionModel(
         id: const Uuid().v4(),
         title: note.isEmpty ? _selectedCategory!.name : note,
@@ -340,7 +345,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   String _getFormattedAmount() {
-    // If there's an operation, show it in the display
     if (_previousValue != null && _operation != null) {
       return _displayAmount;
     }
@@ -361,8 +365,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isExpense = _selectedType == TransactionType.expense;
+    final typeColor = isExpense ? AppTheme.expense : AppTheme.income;
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
+      height: MediaQuery.of(context).size.height * 0.88,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -381,7 +388,37 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+
+          // ── TYPE SELECTOR BAR ──
+          if (!_isEditing)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _buildTypeTab(
+                      label: 'Pengeluaran',
+                      type: TransactionType.expense,
+                      activeColor: AppTheme.expense,
+                    ),
+                    _buildTypeTab(
+                      label: 'Pemasukan',
+                      type: TransactionType.income,
+                      activeColor: AppTheme.income,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 20),
+
           // Account and Category selectors
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -489,17 +526,19 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
+
           // Amount display
           Text(
             'Rp ${_getFormattedAmount()}',
             style: TextStyle(
-              fontSize: 48,
+              fontSize: 44,
               fontWeight: FontWeight.w700,
-              color: Colors.grey.shade800,
+              color: typeColor,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+
           // Action buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -562,6 +601,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 : const SizedBox.shrink(),
           ),
           const Spacer(),
+
           // Number pad
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -571,143 +611,89 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '7',
-                        onTap: () => _onNumberPressed('7'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '7', onTap: () => _onNumberPressed('7'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '8',
-                        onTap: () => _onNumberPressed('8'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '8', onTap: () => _onNumberPressed('8'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '9',
-                        onTap: () => _onNumberPressed('9'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '9', onTap: () => _onNumberPressed('9'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildOperatorButton(
-                        label: '÷',
-                        onTap: () => _onOperatorPressed('÷'),
-                      ),
-                    ),
+                        child: _buildOperatorButton(
+                            label: '÷', onTap: () => _onOperatorPressed('÷'))),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Row 2: 4, 5, 6, ×
                 Row(
                   children: [
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '4',
-                        onTap: () => _onNumberPressed('4'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '4', onTap: () => _onNumberPressed('4'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '5',
-                        onTap: () => _onNumberPressed('5'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '5', onTap: () => _onNumberPressed('5'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '6',
-                        onTap: () => _onNumberPressed('6'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '6', onTap: () => _onNumberPressed('6'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildOperatorButton(
-                        label: '×',
-                        onTap: () => _onOperatorPressed('×'),
-                      ),
-                    ),
+                        child: _buildOperatorButton(
+                            label: '×', onTap: () => _onOperatorPressed('×'))),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Row 3: 1, 2, 3, -
                 Row(
                   children: [
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '1',
-                        onTap: () => _onNumberPressed('1'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '1', onTap: () => _onNumberPressed('1'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '2',
-                        onTap: () => _onNumberPressed('2'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '2', onTap: () => _onNumberPressed('2'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '3',
-                        onTap: () => _onNumberPressed('3'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '3', onTap: () => _onNumberPressed('3'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildOperatorButton(
-                        label: '-',
-                        onTap: () => _onOperatorPressed('-'),
-                      ),
-                    ),
+                        child: _buildOperatorButton(
+                            label: '-', onTap: () => _onOperatorPressed('-'))),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Row 4: C, 0, 00, +
                 Row(
                   children: [
                     Expanded(
-                      child: _buildOperatorButton(
-                        label: 'C',
-                        onTap: _onClear,
-                      ),
-                    ),
+                        child:
+                            _buildOperatorButton(label: 'C', onTap: _onClear)),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '0',
-                        onTap: () => _onNumberPressed('0'),
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '0', onTap: () => _onNumberPressed('0'))),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildNumberButton(
-                        label: '.',
-                        onTap: _onDecimalPressed,
-                      ),
-                    ),
+                        child: _buildNumberButton(
+                            label: '.', onTap: _onDecimalPressed)),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: _buildOperatorButton(
-                        label: '+',
-                        onTap: () => _onOperatorPressed('+'),
-                      ),
-                    ),
+                        child: _buildOperatorButton(
+                            label: '+', onTap: () => _onOperatorPressed('+'))),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Row 5: Delete, Equals, and Save
                 Row(
                   children: [
                     Expanded(
                       flex: 2,
                       child: _buildIconButton(
-                        icon: Icons.backspace_outlined,
-                        onTap: _onBackspace,
-                      ),
+                          icon: Icons.backspace_outlined, onTap: _onBackspace),
                     ),
                     const SizedBox(width: 8),
                     if (_previousValue != null && _operation != null) ...[
@@ -742,7 +728,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       child: Container(
                         height: 56,
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade600,
+                          color: typeColor,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: InkWell(
@@ -765,6 +751,46 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           ),
           const SizedBox(height: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTypeTab({
+    required String label,
+    required TransactionType type,
+    required Color activeColor,
+  }) {
+    final isSelected = _selectedType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onTypeChanged(type),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: activeColor.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : [],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade500,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -884,10 +910,10 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   void _showCategoryPicker() {
     final provider = context.read<FinanceProvider>();
-    final categories = [
-      ...provider.expenseCategories,
-      ...provider.incomeCategories
-    ];
+    // Show only categories matching the selected type
+    final categories = _selectedType == TransactionType.expense
+        ? provider.expenseCategories
+        : provider.incomeCategories;
 
     showModalBottomSheet(
       context: context,
@@ -910,9 +936,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Pilih Kategori',
-              style: TextStyle(
+            Text(
+              _selectedType == TransactionType.expense
+                  ? 'Kategori Pengeluaran'
+                  : 'Kategori Pemasukan',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
