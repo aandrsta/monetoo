@@ -170,16 +170,6 @@ class _ReportScreenState extends State<ReportScreen> {
                     color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    savingRate >= 0
-                        ? 'Tingkat Tabungan: ${savingRate.toStringAsFixed(1)}%'
-                        : 'Defisit Anggaran',
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: savingRate >= 0
-                            ? AppTheme.income
-                            : AppTheme.expense),
-                  ),
                 ),
                 const SizedBox(height: 20),
                 Row(

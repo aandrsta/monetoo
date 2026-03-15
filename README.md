@@ -1,4 +1,4 @@
-# monetoo
+# Monetoo
 
 A new Flutter project.
 

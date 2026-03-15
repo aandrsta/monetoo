@@ -8,6 +8,7 @@ import '../providers/finance_provider.dart';
 import '../models/category_model.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_theme.dart';
+import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
 
@@ -23,6 +24,9 @@ class _CategoryScreenState extends State<CategoryScreen>
   late TabController _tabController;
   DateTime _selectedMonth = DateTime.now();
   TransactionType _selectedType = TransactionType.expense;
+
+  // Mode edit — toggle dengan tombol pensil
+  bool _editMode = false;
 
   @override
   void initState() {
@@ -53,49 +57,85 @@ class _CategoryScreenState extends State<CategoryScreen>
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
-            // Calculate monthly totals
-            final monthlyTransactions = provider.transactions.where((t) {
-              return t.date.year == _selectedMonth.year &&
-                  t.date.month == _selectedMonth.month;
-            }).toList();
+            final monthlyTx = provider.transactions
+                .where((t) =>
+                    t.date.year == _selectedMonth.year &&
+                    t.date.month == _selectedMonth.month)
+                .toList();
 
-            final monthlyIncome = monthlyTransactions
+            final monthlyIncome = monthlyTx
                 .where((t) => t.type == TransactionType.income)
-                .fold(0.0, (sum, t) => sum + t.amount);
-
-            final monthlyExpense = monthlyTransactions
+                .fold(0.0, (s, t) => s + t.amount);
+            final monthlyExpense = monthlyTx
                 .where((t) => t.type == TransactionType.expense)
-                .fold(0.0, (sum, t) => sum + t.amount);
-
+                .fold(0.0, (s, t) => s + t.amount);
             final monthlyBalance = monthlyIncome - monthlyExpense;
 
             return Column(
               children: [
-                // Header with balance
+                // ── HEADER ──
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   child: Column(
                     children: [
-                      const Text(
-                        'Saldo keseluruhan',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        CurrencyFormatter.format(monthlyBalance),
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: monthlyBalance >= 0
-                              ? AppTheme.textPrimary
-                              : AppTheme.expense,
-                        ),
+                      // Title row dengan tombol pensil
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Saldo keseluruhan',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.textSecondary)),
+                              const SizedBox(height: 4),
+                              Text(
+                                CurrencyFormatter.format(monthlyBalance),
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w700,
+                                  color: monthlyBalance >= 0
+                                      ? AppTheme.textPrimary
+                                      : AppTheme.expense,
+                                ),
+                              ),
+                            ],
+                          ),
+                          // Tombol pensil — toggle edit mode
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _editMode = !_editMode);
+                              if (_editMode) {
+                                AppToast.info(
+                                    context, 'Ketuk kategori untuk edit');
+                              }
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: _editMode
+                                    ? AppTheme.accent
+                                    : AppTheme.accent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                _editMode
+                                    ? Icons.edit_rounded
+                                    : Icons.edit_outlined,
+                                color:
+                                    _editMode ? Colors.white : AppTheme.accent,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
-                      // Month selector - simple style like transaction screen
+
+                      // Month selector
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -107,10 +147,9 @@ class _CategoryScreenState extends State<CategoryScreen>
                           Text(
                             DateFormatter.formatMonthYear(_selectedMonth),
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary),
                           ),
                           IconButton(
                             onPressed: _selectedMonth.month ==
@@ -130,16 +169,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // Income/Expense summary - now clickable
+
+                      // Income/Expense selector
                       Row(
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedType = TransactionType.expense;
-                                });
-                              },
+                              onTap: () => setState(() =>
+                                  _selectedType = TransactionType.expense),
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -154,11 +191,10 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2))
                                   ],
                                 ),
                                 child: Column(
@@ -167,21 +203,19 @@ class _CategoryScreenState extends State<CategoryScreen>
                                     Text(
                                       'Pengeluaran',
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: _selectedType ==
-                                                TransactionType.expense
-                                            ? AppTheme.expense
-                                            : AppTheme.textSecondary,
-                                      ),
+                                          fontSize: 12,
+                                          color: _selectedType ==
+                                                  TransactionType.expense
+                                              ? AppTheme.expense
+                                              : AppTheme.textSecondary),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       CurrencyFormatter.format(monthlyExpense),
                                       style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.expense,
-                                      ),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.expense),
                                     ),
                                   ],
                                 ),
@@ -191,11 +225,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                           const SizedBox(width: 12),
                           Expanded(
                             child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedType = TransactionType.income;
-                                });
-                              },
+                              onTap: () => setState(
+                                  () => _selectedType = TransactionType.income),
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -210,11 +241,10 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2))
                                   ],
                                 ),
                                 child: Column(
@@ -223,21 +253,19 @@ class _CategoryScreenState extends State<CategoryScreen>
                                     Text(
                                       'Pendapatan',
                                       style: TextStyle(
-                                        fontSize: 12,
-                                        color: _selectedType ==
-                                                TransactionType.income
-                                            ? AppTheme.income
-                                            : AppTheme.textSecondary,
-                                      ),
+                                          fontSize: 12,
+                                          color: _selectedType ==
+                                                  TransactionType.income
+                                              ? AppTheme.income
+                                              : AppTheme.textSecondary),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       CurrencyFormatter.format(monthlyIncome),
                                       style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppTheme.income,
-                                      ),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppTheme.income),
                                     ),
                                   ],
                                 ),
@@ -246,15 +274,45 @@ class _CategoryScreenState extends State<CategoryScreen>
                           ),
                         ],
                       ),
+
+                      // Banner edit mode
+                      if (_editMode) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: AppTheme.accent.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: AppTheme.accent.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline_rounded,
+                                  size: 16,
+                                  color:
+                                      AppTheme.accent.withValues(alpha: 0.8)),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Mode edit aktif — ketuk kategori untuk ubah atau hapus',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                // Category grid
+
+                // ── GRID KATEGORI ──
                 Expanded(
-                  child: _buildCategoryGrid(
-                    provider,
-                    monthlyTransactions,
-                  ),
+                  child: _buildCategoryGrid(provider, monthlyTx),
                 ),
               ],
             );
@@ -265,25 +323,14 @@ class _CategoryScreenState extends State<CategoryScreen>
   }
 
   Widget _buildCategoryGrid(
-    FinanceProvider provider,
-    List<TransactionModel> monthlyTransactions,
-  ) {
-    // Calculate category stats for the selected month
-    final Map<String, Map<String, dynamic>> categoryStats = {};
-
-    for (final t in monthlyTransactions) {
-      if (!categoryStats.containsKey(t.categoryName)) {
-        categoryStats[t.categoryName] = {
-          'amount': 0.0,
-          'count': 0,
-          'type': t.type,
-        };
-      }
-      categoryStats[t.categoryName]!['amount'] += t.amount;
-      categoryStats[t.categoryName]!['count'] += 1;
+      FinanceProvider provider, List<TransactionModel> monthlyTx) {
+    final Map<String, Map<String, dynamic>> stats = {};
+    for (final t in monthlyTx) {
+      stats[t.categoryName] ??= {'amount': 0.0, 'count': 0, 'type': t.type};
+      stats[t.categoryName]!['amount'] += t.amount;
+      stats[t.categoryName]!['count'] += 1;
     }
 
-    // Filter categories based on selected type
     final categories = _selectedType == TransactionType.expense
         ? provider.expenseCategories
         : provider.incomeCategories;
@@ -296,69 +343,16 @@ class _CategoryScreenState extends State<CategoryScreen>
         mainAxisSpacing: 12,
         childAspectRatio: 2.2,
       ),
-      itemCount: categories.length + 1, // +1 for add button
+      itemCount: categories.length + 1,
       itemBuilder: (context, index) {
         if (index == categories.length) {
           return _buildAddCategoryButton();
         }
-
         final cat = categories[index];
-        final stats = categoryStats[cat.name] ??
-            {'amount': 0.0, 'count': 0, 'type': cat.type};
-        return _buildCategoryCard(cat, stats, provider, monthlyTransactions);
+        final stat =
+            stats[cat.name] ?? {'amount': 0.0, 'count': 0, 'type': cat.type};
+        return _buildCategoryCard(cat, stat, provider);
       },
-    );
-  }
-
-  Widget _buildAddCategoryButton() {
-    return GestureDetector(
-      onTap: () => _showAddCategorySheet(context, _selectedType),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppTheme.accent.withValues(alpha: 0.3),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppTheme.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.add_rounded,
-                color: AppTheme.accent,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Tambah kategori',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.accent,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -366,52 +360,83 @@ class _CategoryScreenState extends State<CategoryScreen>
     CategoryModel category,
     Map<String, dynamic> stats,
     FinanceProvider provider,
-    List<TransactionModel> monthlyTransactions,
   ) {
     final amount = stats['amount'] ?? 0.0;
+    final isEditMode = _editMode;
 
     return GestureDetector(
       onTap: () {
-        // Open bottom sheet to add transaction with this category
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => AddTransactionBottomSheet(initialCategory: category),
-        );
+        if (isEditMode) {
+          // Edit mode: buka sheet edit langsung
+          _showCategorySheet(context, category, category.type);
+        } else {
+          // Normal mode: buka tambah transaksi
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) =>
+                AddTransactionBottomSheet(initialCategory: category),
+          );
+        }
       },
-      onLongPress: () {
-        // Open edit category sheet
-        _showCategorySheet(context, category, category.type);
-      },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isEditMode
+              ? Color(category.color).withValues(alpha: 0.08)
+              : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(
+            color: isEditMode
+                ? Color(category.color).withValues(alpha: 0.4)
+                : Colors.transparent,
+            width: isEditMode ? 1.5 : 0,
+          ),
+          boxShadow: isEditMode
+              ? []
+              : [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2))
+                ],
         ),
         child: Row(
           children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: Color(category.color).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  category.icon,
-                  style: const TextStyle(fontSize: 22),
+            Stack(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Color(category.color).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Text(category.icon,
+                        style: const TextStyle(fontSize: 22)),
+                  ),
                 ),
-              ),
+                // Badge pensil kecil di pojok saat edit mode
+                if (isEditMode)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: AppTheme.accent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
+                      child: const Icon(Icons.edit_rounded,
+                          size: 8, color: Colors.white),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -422,22 +447,26 @@ class _CategoryScreenState extends State<CategoryScreen>
                   Text(
                     category.name,
                     style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
-                    ),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    CurrencyFormatter.formatCompact(amount),
+                    isEditMode
+                        ? 'Ketuk untuk edit'
+                        : CurrencyFormatter.formatCompact(amount),
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: category.type == TransactionType.expense
-                          ? AppTheme.expense
-                          : AppTheme.income,
+                      fontSize: isEditMode ? 11 : 14,
+                      fontWeight:
+                          isEditMode ? FontWeight.w400 : FontWeight.w700,
+                      color: isEditMode
+                          ? AppTheme.textSecondary
+                          : category.type == TransactionType.expense
+                              ? AppTheme.expense
+                              : AppTheme.income,
                     ),
                   ),
                 ],
@@ -449,13 +478,57 @@ class _CategoryScreenState extends State<CategoryScreen>
     );
   }
 
-  void _showAddCategorySheet(BuildContext context, TransactionType type) {
-    _showCategorySheet(context, null, type);
+  Widget _buildAddCategoryButton() {
+    return GestureDetector(
+      onTap: () {
+        // Saat tambah, nonaktifkan edit mode dulu
+        if (_editMode) setState(() => _editMode = false);
+        _showCategorySheet(context, null, _selectedType);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: AppTheme.accent.withValues(alpha: 0.3), width: 2),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.add_rounded,
+                  color: AppTheme.accent, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text('Tambah kategori',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.accent)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
+
+  // ── CATEGORY SHEET ──
 
   void _showCategorySheet(BuildContext context, CategoryModel? existing,
       TransactionType defaultType) {
-    final nameController = TextEditingController(text: existing?.name ?? '');
+    final nameCtrl = TextEditingController(text: existing?.name ?? '');
     String selectedIcon = existing?.icon ?? '📦';
     int selectedColor = existing?.color ?? 0xFF7C6FFF;
     TransactionType selectedType = existing?.type ?? defaultType;
@@ -569,7 +642,7 @@ class _CategoryScreenState extends State<CategoryScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
+        builder: (ctx, setModal) => Container(
           height: MediaQuery.of(ctx).size.height * 0.85,
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -578,16 +651,14 @@ class _CategoryScreenState extends State<CategoryScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
               Center(
                 child: Container(
                   width: 40,
                   height: 4,
                   margin: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.divider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                      color: AppTheme.divider,
+                      borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               Padding(
@@ -595,10 +666,9 @@ class _CategoryScreenState extends State<CategoryScreen>
                 child: Text(
                   existing == null ? 'Tambah kategori' : 'Edit kategori',
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary),
                 ),
               ),
               Expanded(
@@ -607,70 +677,65 @@ class _CategoryScreenState extends State<CategoryScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Type selector
+                      // Tipe (hanya saat tambah baru)
                       if (existing == null) ...[
                         const Text('Tipe',
                             style: TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _typeChip(
-                                'Pengeluaran',
-                                TransactionType.expense,
-                                selectedType,
-                                AppTheme.expense,
-                                (t) => setModalState(() => selectedType = t),
-                              ),
+                        Row(children: [
+                          Expanded(
+                            child: _catTypeChip(
+                              'Pengeluaran',
+                              TransactionType.expense,
+                              selectedType,
+                              AppTheme.expense,
+                              (t) => setModal(() => selectedType = t),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _typeChip(
-                                'Pemasukan',
-                                TransactionType.income,
-                                selectedType,
-                                AppTheme.income,
-                                (t) => setModalState(() => selectedType = t),
-                              ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _catTypeChip(
+                              'Pemasukan',
+                              TransactionType.income,
+                              selectedType,
+                              AppTheme.income,
+                              (t) => setModal(() => selectedType = t),
                             ),
-                          ],
-                        ),
+                          ),
+                        ]),
                         const SizedBox(height: 16),
                       ],
 
-                      // Name
+                      // Nama
                       const Text('Nama Kategori',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       TextField(
-                        controller: nameController,
+                        controller: nameCtrl,
                         style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Contoh: Kuliner, Transport...',
-                          prefixIcon: Text(
-                            selectedIcon,
-                            style: const TextStyle(fontSize: 20),
-                            textAlign: TextAlign.center,
-                          ),
+                          prefixIcon: Text(selectedIcon,
+                              style: const TextStyle(fontSize: 20),
+                              textAlign: TextAlign.center),
                           prefixIconConstraints:
                               const BoxConstraints(minWidth: 48, maxWidth: 48),
                         ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Randomize button
+                      // Acak
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            final random = Random();
-                            setModalState(() {
-                              selectedIcon =
-                                  icons[random.nextInt(icons.length)];
+                            final rng = Random();
+                            setModal(() {
+                              selectedIcon = icons[rng.nextInt(icons.length)];
                               selectedColor =
-                                  colors[random.nextInt(colors.length)];
+                                  colors[rng.nextInt(colors.length)];
                             });
                           },
                           icon: const Icon(Icons.shuffle_rounded),
@@ -680,14 +745,13 @@ class _CategoryScreenState extends State<CategoryScreen>
                             side: const BorderSide(color: AppTheme.accent),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
 
-                      // Icon picker
+                      // Icon picker (3 baris pertama + tombol lihat semua)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -709,24 +773,21 @@ class _CategoryScreenState extends State<CategoryScreen>
                           mainAxisSpacing: 8,
                           crossAxisSpacing: 8,
                         ),
-                        itemCount:
-                            18, // 3 rows x 6 columns = 18 (17 icons + 1 more button)
+                        itemCount: 18,
                         itemBuilder: (_, i) {
-                          // Last item is "More Icon" button
                           if (i == 17) {
                             return GestureDetector(
                               onTap: () async {
                                 final result = await showDialog<String>(
                                   context: context,
-                                  builder: (dialogCtx) =>
-                                      _buildIconPickerDialog(
-                                    icons,
-                                    selectedIcon,
-                                    selectedColor,
+                                  builder: (_) => _IconPickerDialog(
+                                    icons: icons,
+                                    selectedIcon: selectedIcon,
+                                    selectedColor: selectedColor,
                                   ),
                                 );
                                 if (result != null) {
-                                  setModalState(() => selectedIcon = result);
+                                  setModal(() => selectedIcon = result);
                                 }
                               },
                               child: Container(
@@ -734,26 +795,19 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   color: AppTheme.accent.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color:
-                                        AppTheme.accent.withValues(alpha: 0.3),
-                                    width: 2,
-                                    style: BorderStyle.solid,
-                                  ),
+                                      color: AppTheme.accent
+                                          .withValues(alpha: 0.3),
+                                      width: 2),
                                 ),
                                 child: const Center(
-                                  child: Icon(
-                                    Icons.add_rounded,
-                                    color: AppTheme.accent,
-                                    size: 24,
-                                  ),
-                                ),
+                                    child: Icon(Icons.add_rounded,
+                                        color: AppTheme.accent, size: 24)),
                               ),
                             );
                           }
-
                           return GestureDetector(
                             onTap: () =>
-                                setModalState(() => selectedIcon = icons[i]),
+                                setModal(() => selectedIcon = icons[i]),
                             child: Container(
                               decoration: BoxDecoration(
                                 color: selectedIcon == icons[i]
@@ -762,16 +816,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                                     : AppTheme.bgLight,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: selectedIcon == icons[i]
-                                      ? Color(selectedColor)
-                                      : Colors.transparent,
-                                  width: 2,
-                                ),
+                                    color: selectedIcon == icons[i]
+                                        ? Color(selectedColor)
+                                        : Colors.transparent,
+                                    width: 2),
                               ),
                               child: Center(
-                                child: Text(icons[i],
-                                    style: const TextStyle(fontSize: 22)),
-                              ),
+                                  child: Text(icons[i],
+                                      style: const TextStyle(fontSize: 22))),
                             ),
                           );
                         },
@@ -804,17 +856,16 @@ class _CategoryScreenState extends State<CategoryScreen>
                         itemCount: colors.length,
                         itemBuilder: (_, i) => GestureDetector(
                           onTap: () =>
-                              setModalState(() => selectedColor = colors[i]),
+                              setModal(() => selectedColor = colors[i]),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Color(colors[i]),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selectedColor == colors[i]
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                width: 2,
-                              ),
+                                  color: selectedColor == colors[i]
+                                      ? Colors.white
+                                      : Colors.transparent,
+                                  width: 2),
                               boxShadow: selectedColor == colors[i]
                                   ? [
                                       BoxShadow(
@@ -833,63 +884,13 @@ class _CategoryScreenState extends State<CategoryScreen>
                       ),
                       const SizedBox(height: 24),
 
-                      // Delete button (for all existing categories)
+                      // Hapus (hanya saat edit)
                       if (existing != null) ...[
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () {
-                              // Check if category is being used
-                              final provider = context.read<FinanceProvider>();
-                              final isUsed = provider.transactions
-                                  .any((t) => t.categoryName == existing.name);
-
-                              if (isUsed) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Tidak bisa hapus kategori yang masih digunakan'),
-                                    backgroundColor: AppTheme.expense,
-                                  ),
-                                );
-                                return;
-                              }
-
-                              // Show confirmation dialog
-                              showDialog(
-                                context: context,
-                                builder: (dialogCtx) => AlertDialog(
-                                  title: const Text('Hapus Kategori?'),
-                                  content: Text(
-                                      'Kategori "${existing.name}" akan dihapus permanen'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(dialogCtx),
-                                      child: const Text('Batal'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        provider.deleteCategory(existing.id);
-                                        Navigator.pop(
-                                            dialogCtx); // Close dialog
-                                        Navigator.pop(ctx); // Close sheet
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                                'Kategori berhasil dihapus'),
-                                          ),
-                                        );
-                                      },
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: AppTheme.expense,
-                                      ),
-                                      child: const Text('Hapus'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                            onPressed: () =>
+                                _confirmDeleteCategory(ctx, existing),
                             icon: const Icon(Icons.delete_outline_rounded),
                             label: const Text('Hapus Kategori'),
                             style: OutlinedButton.styleFrom(
@@ -897,53 +898,59 @@ class _CategoryScreenState extends State<CategoryScreen>
                               side: const BorderSide(color: AppTheme.expense),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                           ),
                         ),
                         const SizedBox(height: 12),
                       ],
 
-                      // Save button
+                      // Simpan
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            if (nameController.text.isEmpty) return;
+                            if (nameCtrl.text.trim().isEmpty) {
+                              AppToast.error(
+                                  context, 'Nama kategori tidak boleh kosong');
+                              return;
+                            }
                             final provider = context.read<FinanceProvider>();
                             final category = CategoryModel(
                               id: existing?.id ?? const Uuid().v4(),
-                              name: nameController.text.trim(),
+                              name: nameCtrl.text.trim(),
                               icon: selectedIcon,
                               color: selectedColor,
                               type: existing?.type ?? selectedType,
                               isDefault: existing?.isDefault ?? false,
                               createdAt: existing?.createdAt ?? DateTime.now(),
                             );
-
                             if (existing == null) {
                               provider.addCategory(category);
+                              Navigator.pop(ctx);
+                              AppToast.success(
+                                  context, 'Kategori berhasil ditambahkan');
                             } else {
                               provider.updateCategory(category);
+                              Navigator.pop(ctx);
+                              AppToast.success(
+                                  context, 'Kategori berhasil diperbarui');
+                              // Matikan edit mode setelah edit
+                              setState(() => _editMode = false);
                             }
-                            Navigator.pop(ctx);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(selectedColor),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: Text(
                             existing == null
                                 ? 'Tambah kategori'
                                 : 'Simpan Perubahan',
                             style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
+                                fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),
@@ -958,77 +965,184 @@ class _CategoryScreenState extends State<CategoryScreen>
     );
   }
 
-  Widget _typeChip(
+  // ── CONFIRM DELETE CATEGORY ──
+
+  void _confirmDeleteCategory(BuildContext sheetCtx, CategoryModel category) {
+    showModalBottomSheet(
+      context: sheetCtx,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                  color: AppTheme.divider,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: AppTheme.expense.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_outline_rounded,
+                  color: AppTheme.expense, size: 28),
+            ),
+            const SizedBox(height: 16),
+            const Text('Hapus Kategori?',
+                style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary)),
+            const SizedBox(height: 8),
+            Text(
+              'Kategori "${category.name}" akan dihapus permanen.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                          color: AppTheme.bgLight,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Center(
+                        child: Text('Batal',
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textSecondary)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      final provider = context.read<FinanceProvider>();
+                      final isUsed = provider.transactions
+                          .any((t) => t.categoryName == category.name);
+                      if (isUsed) {
+                        Navigator.pop(ctx);
+                        AppToast.error(
+                            context, 'Kategori masih digunakan di transaksi');
+                        return;
+                      }
+                      provider.deleteCategory(category.id);
+                      Navigator.pop(ctx); // tutup confirm
+                      Navigator.pop(sheetCtx); // tutup edit sheet
+                      AppToast.success(context, 'Kategori berhasil dihapus');
+                      setState(() => _editMode = false);
+                    },
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                          color: AppTheme.expense,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Center(
+                        child: Text('Hapus',
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _catTypeChip(
     String label,
     TransactionType type,
     TransactionType selected,
     Color color,
     Function(TransactionType) onTap,
   ) {
-    final isSelected = type == selected;
+    final isSel = type == selected;
     return GestureDetector(
       onTap: () => onTap(type),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? color : AppTheme.bgLight,
+          color: isSel ? color : AppTheme.bgLight,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: isSelected ? Colors.white : AppTheme.textSecondary,
-            ),
-          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isSel ? Colors.white : AppTheme.textSecondary)),
         ),
       ),
     );
   }
+}
 
-  Widget _buildIconPickerDialog(
-    List<String> icons,
-    String selectedIcon,
-    int selectedColor,
-  ) {
+// ── ICON PICKER DIALOG ──
+
+class _IconPickerDialog extends StatelessWidget {
+  final List<String> icons;
+  final String selectedIcon;
+  final int selectedColor;
+
+  const _IconPickerDialog({
+    required this.icons,
+    required this.selectedIcon,
+    required this.selectedColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         width: double.maxFinite,
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.7,
-        ),
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Pilih Ikon',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '${icons.length} ikon',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
+                  const Text('Pilih Ikon',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary)),
+                  Text('${icons.length} ikon',
+                      style: const TextStyle(
+                          fontSize: 13, color: AppTheme.textSecondary)),
                 ],
               ),
             ),
             const Divider(height: 1),
-            // Icon grid
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.all(20),
@@ -1047,18 +1161,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                           : AppTheme.bgLight,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: selectedIcon == icons[i]
-                            ? Color(selectedColor)
-                            : Colors.transparent,
-                        width: 2,
-                      ),
+                          color: selectedIcon == icons[i]
+                              ? Color(selectedColor)
+                              : Colors.transparent,
+                          width: 2),
                     ),
                     child: Center(
-                      child: Text(
-                        icons[i],
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                    ),
+                        child: Text(icons[i],
+                            style: const TextStyle(fontSize: 22))),
                   ),
                 ),
               ),

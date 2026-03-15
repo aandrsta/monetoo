@@ -1,4 +1,4 @@
-package com.example.monetoo
+package com.example.Monetoo
 
 import io.flutter.embedding.android.FlutterActivity
 

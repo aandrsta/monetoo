@@ -1,4 +1,4 @@
-name: monetoo
+name: Monetoo
 description: Aplikasi Pencatatan Keuangan Pribadi
 publish_to: "none"
 version: 1.0.0+1
@@ -54,6 +54,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/monetoo_icon.png"
+  image_path: "assets/Monetoo_icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "#F8F9FF"
