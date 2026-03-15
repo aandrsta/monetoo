@@ -164,6 +164,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     });
   }
 
+  void _onDoubleZeroPressed() {
+    _onNumberPressed('0');
+    _onNumberPressed('0');
+  }
+
   void _onOperatorPressed(String operator) {
     setState(() {
       if (_previousValue != null && _operation != null && !_shouldResetAmount) {
@@ -603,8 +608,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           const Spacer(),
 
           // Number pad
+
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Column(
               children: [
                 // Row 1: 7, 8, 9, ÷
@@ -628,6 +634,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Row 2: 4, 5, 6, ×
                 Row(
                   children: [
                     Expanded(
@@ -648,6 +655,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Row 3: 1, 2, 3, -
                 Row(
                   children: [
                     Expanded(
@@ -668,6 +676,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Row 4: C, 0, 00, +  (backspace DIHAPUS dari sini)
                 Row(
                   children: [
                     Expanded(
@@ -680,7 +689,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     const SizedBox(width: 8),
                     Expanded(
                         child: _buildNumberButton(
-                            label: '.', onTap: _onDecimalPressed)),
+                            label: '00', onTap: () => _onDoubleZeroPressed())),
                     const SizedBox(width: 8),
                     Expanded(
                         child: _buildOperatorButton(
@@ -688,14 +697,18 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Row 5 (BAWAH): ⌫ lebar — = — ✓
+                // Backspace dipindah ke kiri di row bawah supaya tidak ketekan
                 Row(
                   children: [
+                    // Backspace: flex 1, di kiri, aman dari jempol kanan
                     Expanded(
-                      flex: 2,
+                      flex: 1,
                       child: _buildIconButton(
                           icon: Icons.backspace_outlined, onTap: _onBackspace),
                     ),
                     const SizedBox(width: 8),
+                    // Equals: hanya muncul saat ada operasi
                     if (_previousValue != null && _operation != null) ...[
                       Expanded(
                         flex: 1,
@@ -712,10 +725,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                               child: Text(
                                 '=',
                                 style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white),
                               ),
                             ),
                           ),
@@ -723,8 +735,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       ),
                       const SizedBox(width: 8),
                     ],
+                    // Save: flex 2, lebar di kanan, mudah dipencet
                     Expanded(
-                      flex: 1,
+                      flex: 2,
                       child: Container(
                         height: 56,
                         decoration: BoxDecoration(
@@ -734,11 +747,22 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                         child: InkWell(
                           onTap: _onSave,
                           borderRadius: BorderRadius.circular(12),
-                          child: const Center(
-                            child: Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 28,
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.check_rounded,
+                                    color: Colors.white, size: 22),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _isEditing ? 'Perbarui' : 'Simpan',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),

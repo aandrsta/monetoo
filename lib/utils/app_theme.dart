@@ -1,5 +1,6 @@
 // lib/utils/app_theme.dart
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -19,9 +20,15 @@ class AppTheme {
   static const Color divider = Color(0xFFEEEFF5);
   static const Color bgLight = Color(0xFFF4F6FF);
 
+  static String get _systemFontFamily {
+    if (Platform.isIOS || Platform.isMacOS) return '.SF UI Text';
+    return 'sans-serif';
+  }
+
   static ThemeData get lightTheme {
     return ThemeData(
-      useMaterial3: true,
+      useMaterial3: false,
+      fontFamily: 'SFProText',
       scaffoldBackgroundColor: surface,
       colorScheme: const ColorScheme.light(
         primary: accent,
@@ -29,15 +36,16 @@ class AppTheme {
         surface: surface,
         error: expense,
       ),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         titleTextStyle: TextStyle(
+          fontFamily: _systemFontFamily,
           color: textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(color: textPrimary),
+        iconTheme: const IconThemeData(color: textPrimary),
       ),
       cardTheme: CardThemeData(
         color: cardBg,
@@ -67,8 +75,16 @@ class AppTheme {
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        labelStyle: const TextStyle(color: textSecondary, fontSize: 14),
-        hintStyle: const TextStyle(color: textSecondary, fontSize: 14),
+        labelStyle: TextStyle(
+          fontFamily: _systemFontFamily,
+          color: textSecondary,
+          fontSize: 14,
+        ),
+        hintStyle: TextStyle(
+          fontFamily: _systemFontFamily,
+          color: textSecondary,
+          fontSize: 14,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -79,7 +95,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
+            fontFamily: _systemFontFamily,
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
