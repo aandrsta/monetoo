@@ -141,7 +141,7 @@ class _ReportScreenState extends State<ReportScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.3),
+                  color: AppTheme.primary.withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 )
@@ -167,7 +167,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -285,9 +285,9 @@ class _ReportScreenState extends State<ReportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Tren Harian',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary),
@@ -347,8 +347,9 @@ class _ReportScreenState extends State<ReportScreen> {
                         showTitles: data.length <= 15,
                         getTitlesWidget: (value, meta) {
                           final idx = value.toInt();
-                          if (idx >= data.length)
+                          if (idx >= data.length) {
                             return const SizedBox.shrink();
+                          }
                           final dateStr = data[idx]['date'] as String;
                           final parts = dateStr.split('-');
                           return Text(
@@ -364,7 +365,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   gridData: FlGridData(
                     show: true,
-                    getDrawingHorizontalLine: (value) => FlLine(
+                    getDrawingHorizontalLine: (value) => const FlLine(
                       color: AppTheme.divider,
                       strokeWidth: 1,
                     ),
@@ -425,9 +426,9 @@ class _ReportScreenState extends State<ReportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Pengeluaran per Kategori',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary),
@@ -535,9 +536,9 @@ class _ReportScreenState extends State<ReportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Laporan Harian',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary),
@@ -563,12 +564,12 @@ class _ReportScreenState extends State<ReportScreen> {
                   ..sort((a, b) => b.compareTo(a));
 
                 if (sortedKeys.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       child: Text(
                         'Tidak ada data untuk bulan ini',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppTheme.textSecondary, fontSize: 13),
                       ),
                     ),

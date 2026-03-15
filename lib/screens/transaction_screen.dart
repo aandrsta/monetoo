@@ -24,20 +24,34 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => const AddTransactionBottomSheet(),
+          );
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Tambah'),
+        backgroundColor: AppTheme.accent,
+        foregroundColor: Colors.white,
+      ),
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
             return Column(
               children: [
                 // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Transaksi',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
                           color: AppTheme.textPrimary,
@@ -89,10 +103,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   List<TransactionModel> _applyFilter(List<TransactionModel> list) {
-    if (_filter == 'income')
+    if (_filter == 'income') {
       return list.where((t) => t.type == TransactionType.income).toList();
-    if (_filter == 'expense')
+    }
+    if (_filter == 'expense') {
       return list.where((t) => t.type == TransactionType.expense).toList();
+    }
     return list;
   }
 
@@ -365,15 +381,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Widget _buildEmpty() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.receipt_long_rounded, size: 64, color: AppTheme.divider),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'Tidak ada transaksi',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               color: AppTheme.textSecondary,
             ),

@@ -76,9 +76,9 @@ class _CategoryScreenState extends State<CategoryScreen>
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         'Saldo keseluruhan',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppTheme.textSecondary,
                         ),
@@ -154,7 +154,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.05),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -209,7 +210,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.05),
                                       blurRadius: 8,
                                       offset: const Offset(0, 2),
                                     ),
@@ -317,12 +319,12 @@ class _CategoryScreenState extends State<CategoryScreen>
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.accent.withOpacity(0.3),
+            color: AppTheme.accent.withValues(alpha: 0.3),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -334,7 +336,7 @@ class _CategoryScreenState extends State<CategoryScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.1),
+                color: AppTheme.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -344,10 +346,10 @@ class _CategoryScreenState extends State<CategoryScreen>
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
+            const Expanded(
               child: Text(
-                'Tambah Kategori',
-                style: const TextStyle(
+                'Tambah kategori',
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.accent,
@@ -389,7 +391,7 @@ class _CategoryScreenState extends State<CategoryScreen>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -401,7 +403,7 @@ class _CategoryScreenState extends State<CategoryScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Color(category.color).withOpacity(0.15),
+                color: Color(category.color).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -591,7 +593,7 @@ class _CategoryScreenState extends State<CategoryScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Text(
-                  existing == null ? 'Tambah Kategori' : 'Edit Kategori',
+                  existing == null ? 'Tambah kategori' : 'Edit kategori',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -607,8 +609,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                     children: [
                       // Type selector
                       if (existing == null) ...[
-                        Text('Tipe',
-                            style: const TextStyle(
+                        const Text('Tipe',
+                            style: TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(
@@ -638,8 +640,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                       ],
 
                       // Name
-                      Text('Nama Kategori',
-                          style: const TextStyle(
+                      const Text('Nama Kategori',
+                          style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       TextField(
@@ -689,8 +691,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Pilih Ikon',
-                              style: const TextStyle(
+                          const Text('Pilih Ikon',
+                              style: TextStyle(
                                   fontSize: 13, fontWeight: FontWeight.w600)),
                           Text('${icons.length} ikon',
                               style: const TextStyle(
@@ -729,15 +731,16 @@ class _CategoryScreenState extends State<CategoryScreen>
                               },
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: AppTheme.accent.withOpacity(0.1),
+                                  color: AppTheme.accent.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: AppTheme.accent.withOpacity(0.3),
+                                    color:
+                                        AppTheme.accent.withValues(alpha: 0.3),
                                     width: 2,
                                     style: BorderStyle.solid,
                                   ),
                                 ),
-                                child: Center(
+                                child: const Center(
                                   child: Icon(
                                     Icons.add_rounded,
                                     color: AppTheme.accent,
@@ -754,7 +757,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                             child: Container(
                               decoration: BoxDecoration(
                                 color: selectedIcon == icons[i]
-                                    ? Color(selectedColor).withOpacity(0.15)
+                                    ? Color(selectedColor)
+                                        .withValues(alpha: 0.15)
                                     : AppTheme.bgLight,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
@@ -778,8 +782,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Pilih Warna',
-                              style: const TextStyle(
+                          const Text('Pilih Warna',
+                              style: TextStyle(
                                   fontSize: 13, fontWeight: FontWeight.w600)),
                           Text('${colors.length} warna',
                               style: const TextStyle(
@@ -814,8 +818,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                               boxShadow: selectedColor == colors[i]
                                   ? [
                                       BoxShadow(
-                                          color:
-                                              Color(colors[i]).withOpacity(0.5),
+                                          color: Color(colors[i])
+                                              .withValues(alpha: 0.5),
                                           blurRadius: 8)
                                     ]
                                   : [],
@@ -934,7 +938,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                           ),
                           child: Text(
                             existing == null
-                                ? 'Tambah Kategori'
+                                ? 'Tambah kategori'
                                 : 'Simpan Perubahan',
                             style: const TextStyle(
                               fontSize: 15,
@@ -1039,7 +1043,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                   child: Container(
                     decoration: BoxDecoration(
                       color: selectedIcon == icons[i]
-                          ? Color(selectedColor).withOpacity(0.15)
+                          ? Color(selectedColor).withValues(alpha: 0.15)
                           : AppTheme.bgLight,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(

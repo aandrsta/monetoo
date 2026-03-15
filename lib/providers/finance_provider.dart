@@ -52,27 +52,37 @@ class FinanceProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    await loadCategories();
-    await loadAccounts();
-    await loadTransactions();
+    final categoriesFuture = _db.getAllCategories();
+    final accountsFuture = _db.getAllAccounts();
+    final transactionsFuture = _db.getAllTransactions();
+
+    _categories = await categoriesFuture;
+    _accounts = await accountsFuture;
+    _transactions = await transactionsFuture;
 
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<void> loadCategories() async {
+  Future<void> loadCategories({bool shouldNotify = true}) async {
     _categories = await _db.getAllCategories();
-    notifyListeners();
+    if (shouldNotify) {
+      notifyListeners();
+    }
   }
 
-  Future<void> loadAccounts() async {
+  Future<void> loadAccounts({bool shouldNotify = true}) async {
     _accounts = await _db.getAllAccounts();
-    notifyListeners();
+    if (shouldNotify) {
+      notifyListeners();
+    }
   }
 
-  Future<void> loadTransactions() async {
+  Future<void> loadTransactions({bool shouldNotify = true}) async {
     _transactions = await _db.getAllTransactions();
-    notifyListeners();
+    if (shouldNotify) {
+      notifyListeners();
+    }
   }
 
   Future<List<TransactionModel>> getTransactionsByDate(DateTime date) async {

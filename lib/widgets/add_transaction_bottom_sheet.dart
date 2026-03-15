@@ -31,22 +31,26 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   double? _previousValue;
   String? _operation;
   bool _shouldResetAmount = false;
+  bool _isNoteEditorVisible = false;
   CategoryModel? _selectedCategory;
   AccountModel? _selectedAccount;
   DateTime _selectedDate = DateTime.now();
   String _note = '';
+  late final TextEditingController _noteController;
 
   bool get _isEditing => widget.transaction != null;
 
   @override
   void initState() {
     super.initState();
+    _noteController = TextEditingController();
     if (_isEditing) {
       final t = widget.transaction!;
       _amount = t.amount.toStringAsFixed(0);
       _displayAmount = _amount;
       _selectedDate = t.date;
       _note = t.note ?? '';
+      _noteController.text = _note;
       // Category and Account will be set after build when we have access to provider
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final provider = context.read<FinanceProvider>();
@@ -91,6 +95,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       });
     } else {
       _selectedCategory = widget.initialCategory;
+      _noteController.text = _note;
       // Set default account after first frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final provider = context.read<FinanceProvider>();
@@ -111,6 +116,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         });
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
   }
 
   void _onNumberPressed(String number) {
@@ -245,9 +256,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   void _onSave() async {
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              const Text('Pilih kategori terlebih dahulu', style: TextStyle()),
+        const SnackBar(
+          content: Text('Pilih kategori terlebih dahulu', style: TextStyle()),
           backgroundColor: AppTheme.expense,
         ),
       );
@@ -257,8 +267,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     final amount = double.tryParse(_amount.isEmpty ? '0' : _amount) ?? 0;
     if (amount == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Masukkan nominal transaksi', style: TextStyle()),
+        const SnackBar(
+          content: Text('Masukkan nominal transaksi', style: TextStyle()),
           backgroundColor: AppTheme.expense,
         ),
       );
@@ -266,12 +276,13 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     }
 
     final provider = context.read<FinanceProvider>();
+    final note = _noteController.text.trim();
 
     if (_isEditing) {
       // Update existing transaction
       final transaction = TransactionModel(
         id: widget.transaction!.id,
-        title: _note.isEmpty ? _selectedCategory!.name : _note,
+        title: note.isEmpty ? _selectedCategory!.name : note,
         amount: amount,
         type: _selectedCategory!.type,
         categoryId: _selectedCategory!.id,
@@ -280,7 +291,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         categoryColor: _selectedCategory!.color,
         accountId: _selectedAccount?.id,
         date: _selectedDate,
-        note: _note.isEmpty ? null : _note,
+        note: note.isEmpty ? null : note,
         createdAt: widget.transaction!.createdAt,
       );
 
@@ -289,9 +300,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                const Text('Transaksi berhasil diperbarui', style: TextStyle()),
+          const SnackBar(
+            content: Text('Transaksi berhasil diperbarui', style: TextStyle()),
             backgroundColor: AppTheme.income,
             behavior: SnackBarBehavior.floating,
           ),
@@ -301,7 +311,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       // Add new transaction
       final transaction = TransactionModel(
         id: const Uuid().v4(),
-        title: _note.isEmpty ? _selectedCategory!.name : _note,
+        title: note.isEmpty ? _selectedCategory!.name : note,
         amount: amount,
         type: _selectedCategory!.type,
         categoryId: _selectedCategory!.id,
@@ -310,7 +320,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         categoryColor: _selectedCategory!.color,
         accountId: _selectedAccount?.id,
         date: _selectedDate,
-        note: _note.isEmpty ? null : _note,
+        note: note.isEmpty ? null : note,
         createdAt: DateTime.now(),
       );
 
@@ -319,9 +329,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Transaksi berhasil ditambahkan',
-                style: TextStyle()),
+          const SnackBar(
+            content: Text('Transaksi berhasil ditambahkan', style: TextStyle()),
             backgroundColor: AppTheme.income,
             behavior: SnackBarBehavior.floating,
           ),
@@ -399,7 +408,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                               decoration: BoxDecoration(
                                 color: _selectedAccount != null
                                     ? Color(_selectedAccount!.color)
-                                        .withOpacity(0.2)
+                                        .withValues(alpha: 0.2)
                                     : Colors.grey.shade100,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -449,7 +458,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                               decoration: BoxDecoration(
                                 color: _selectedCategory != null
                                     ? Color(_selectedCategory!.color)
-                                        .withOpacity(0.2)
+                                        .withValues(alpha: 0.2)
                                     : Colors.grey.shade100,
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -505,11 +514,52 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 const SizedBox(width: 24),
                 _buildActionButton(
                   icon: Icons.add_comment_outlined,
-                  label: 'Catatan',
-                  onTap: () => _showNoteDialog(),
+                  label: _noteController.text.trim().isEmpty
+                      ? 'Catatan'
+                      : 'Catatan ✓',
+                  onTap: () {
+                    setState(() {
+                      _isNoteEditorVisible = !_isNoteEditorVisible;
+                    });
+                  },
                 ),
               ],
             ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            child: _isNoteEditorVisible
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                    child: TextField(
+                      controller: _noteController,
+                      maxLines: 2,
+                      textInputAction: TextInputAction.done,
+                      decoration: InputDecoration(
+                        hintText: 'Tambahkan catatan...',
+                        prefixIcon: const Icon(Icons.sticky_note_2_outlined),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        _note = value;
+                        setState(() {});
+                      },
+                      onSubmitted: (_) {
+                        setState(() {
+                          _isNoteEditorVisible = false;
+                        });
+                      },
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
           const Spacer(),
           // Number pad
@@ -672,10 +722,10 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                           child: InkWell(
                             onTap: _onEqualsPressed,
                             borderRadius: BorderRadius.circular(12),
-                            child: Center(
+                            child: const Center(
                               child: Text(
                                 '=',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
@@ -860,9 +910,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Pilih Kategori',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
@@ -890,7 +940,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(category.color).withOpacity(0.15),
+                        color: Color(category.color).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: _selectedCategory?.id == category.id
@@ -956,9 +1006,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Pilih Akun',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,
@@ -984,7 +1034,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Color(account.color).withOpacity(0.1)
+                            ? Color(account.color).withValues(alpha: 0.1)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
@@ -1000,7 +1050,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: Color(account.color).withOpacity(0.15),
+                              color:
+                                  Color(account.color).withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
@@ -1055,74 +1106,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     );
   }
 
-  void _showNoteDialog() {
-    final controller = TextEditingController(text: _note);
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            'Catatan',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: 'Tambahkan catatan...',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            maxLines: 3,
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Batal',
-                style: TextStyle(color: AppTheme.textSecondary),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _note = controller.text;
-                });
-                Navigator.pop(ctx);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.accent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-              child: const Text(
-                'Simpan',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final yesterday = DateTime(now.year, now.month, now.day - 1);
@@ -1148,9 +1131,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            Text(
+            const Text(
               'Pilih Tanggal',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textPrimary,

@@ -45,7 +45,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        shadowColor: Colors.black.withOpacity(0.06),
+        shadowColor: Colors.black.withValues(alpha: 0.06),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
@@ -91,7 +91,7 @@ class AppTheme {
   // Shadows
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: Colors.black.withOpacity(0.06),
+          color: Colors.black.withValues(alpha: 0.06),
           blurRadius: 20,
           offset: const Offset(0, 4),
         ),
@@ -99,7 +99,7 @@ class AppTheme {
 
   static List<BoxShadow> get accentShadow => [
         BoxShadow(
-          color: accent.withOpacity(0.3),
+          color: accent.withValues(alpha: 0.3),
           blurRadius: 20,
           offset: const Offset(0, 8),
         ),

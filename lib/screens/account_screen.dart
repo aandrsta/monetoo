@@ -15,22 +15,7 @@ class AccountScreen extends StatefulWidget {
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _AccountScreenState extends State<AccountScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,16 +35,16 @@ class _AccountScreenState extends State<AccountScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
+                          const Text(
                             'Saldo keseluruhan',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               color: AppTheme.textSecondary,
                             ),
                           ),
                           Container(
                             decoration: BoxDecoration(
-                              color: AppTheme.accent.withOpacity(0.1),
+                              color: AppTheme.accent.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -80,63 +65,12 @@ class _AccountScreenState extends State<AccountScreen>
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Tab selector
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppTheme.divider,
-                            width: 1,
-                          ),
-                        ),
-                        child: TabBar(
-                          controller: _tabController,
-                          indicator: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          labelColor: AppTheme.accent,
-                          unselectedLabelColor: AppTheme.textSecondary,
-                          labelStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          unselectedLabelStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          indicatorSize: TabBarIndicatorSize.tab,
-                          dividerColor: Colors.transparent,
-                          splashFactory: NoSplash.splashFactory,
-                          overlayColor:
-                              MaterialStateProperty.all(Colors.transparent),
-                          tabs: const [
-                            Tab(text: 'Akun'),
-                            Tab(text: 'Total'),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
                 // Content
                 Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildAccountsTab(provider),
-                      _buildTotalTab(provider),
-                    ],
-                  ),
+                  child: _buildAccountsTab(provider),
                 ),
               ],
             );
@@ -148,7 +82,6 @@ class _AccountScreenState extends State<AccountScreen>
 
   Widget _buildAccountsTab(FinanceProvider provider) {
     final regularAccounts = provider.regularAccounts;
-    final savingsAccounts = provider.savingsAccounts;
     final balance = provider.balance;
 
     return SingleChildScrollView(
@@ -160,9 +93,9 @@ class _AccountScreenState extends State<AccountScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Akun',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textPrimary,
@@ -185,46 +118,6 @@ class _AccountScreenState extends State<AccountScreen>
           const SizedBox(height: 8),
           _buildAddButton('Tambahkan akun keuangan',
               () => _showAddAccountSheet(context, AccountType.card)),
-          const SizedBox(height: 24),
-          // Savings section
-          Text(
-            'Tabungan',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Savings accounts
-          if (savingsAccounts.isEmpty)
-            _buildEmptySavings()
-          else
-            ...savingsAccounts
-                .map((account) => _buildAccountCard(account, provider)),
-          const SizedBox(height: 8),
-          _buildAddButton('Tambahkan rekening tabungan',
-              () => _showAddAccountSheet(context, AccountType.savings)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTotalTab(FinanceProvider provider) {
-    final balance = provider.balance;
-    final income = provider.totalIncome;
-    final expense = provider.totalExpense;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildSummaryCard('Total Saldo', balance,
-              balance >= 0 ? AppTheme.income : AppTheme.expense),
-          const SizedBox(height: 12),
-          _buildSummaryCard('Total Pemasukan', income, AppTheme.income),
-          const SizedBox(height: 12),
-          _buildSummaryCard('Total Pengeluaran', expense, AppTheme.expense),
         ],
       ),
     );
@@ -244,7 +137,7 @@ class _AccountScreenState extends State<AccountScreen>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -256,7 +149,7 @@ class _AccountScreenState extends State<AccountScreen>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Color(account.color).withOpacity(0.15),
+                color: Color(account.color).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -306,135 +199,54 @@ class _AccountScreenState extends State<AccountScreen>
     );
   }
 
-  Widget _buildEmptySavings() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Text('💎', style: TextStyle(fontSize: 24)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Untuk impian',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                Text(
-                  'Rp 0',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAddButton(String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.divider,
-            style: BorderStyle.solid,
+            color: AppTheme.accent.withValues(alpha: 0.3),
+            width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(12),
+                color: AppTheme.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.add, color: AppTheme.textSecondary),
+              child: const Icon(
+                Icons.add_rounded,
+                color: AppTheme.accent,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppTheme.textSecondary,
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.accent,
+                ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(String label, double amount, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
-            ),
-          ),
-          Text(
-            CurrencyFormatter.format(amount),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -509,7 +321,7 @@ class _AccountScreenState extends State<AccountScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Text(
-                  existing == null ? 'Tambah Akun' : 'Edit Akun',
+                  existing == null ? 'Tambah akun' : 'Edit akun',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -525,8 +337,8 @@ class _AccountScreenState extends State<AccountScreen>
                     children: [
                       // Type selector
                       if (existing == null) ...[
-                        Text('Tipe',
-                            style: const TextStyle(
+                        const Text('Tipe',
+                            style: TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
                         Row(
@@ -559,8 +371,8 @@ class _AccountScreenState extends State<AccountScreen>
                         const SizedBox(height: 16),
                       ],
                       // Name
-                      Text('Nama Akun',
-                          style: const TextStyle(
+                      const Text('Nama Akun',
+                          style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       TextField(
@@ -590,8 +402,8 @@ class _AccountScreenState extends State<AccountScreen>
                       ),
                       const SizedBox(height: 16),
                       // Icon picker
-                      Text('Pilih Ikon',
-                          style: const TextStyle(
+                      const Text('Pilih Ikon',
+                          style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Wrap(
@@ -607,7 +419,8 @@ class _AccountScreenState extends State<AccountScreen>
                               height: 48,
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? Color(selectedColor).withOpacity(0.15)
+                                    ? Color(selectedColor)
+                                        .withValues(alpha: 0.15)
                                     : AppTheme.bgLight,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
@@ -626,8 +439,8 @@ class _AccountScreenState extends State<AccountScreen>
                       ),
                       const SizedBox(height: 16),
                       // Color picker
-                      Text('Pilih Warna',
-                          style: const TextStyle(
+                      const Text('Pilih Warna',
+                          style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       Wrap(
@@ -711,8 +524,8 @@ class _AccountScreenState extends State<AccountScreen>
                           ),
                           child: Text(
                             existing == null
-                                ? 'Tambah Akun'
-                                : 'Simpan Perubahan',
+                                ? 'Tambah akun'
+                                : 'Simpan perubahan',
                             style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w600),
                           ),

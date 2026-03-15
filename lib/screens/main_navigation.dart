@@ -17,6 +17,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
+  late final PageController _pageController;
 
   final List<Widget> _screens = const [
     AccountScreen(),
@@ -26,16 +27,34 @@ class _MainNavigationState extends State<MainNavigation> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() => _currentIndex = index);
+        },
+        children: _screens,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
               blurRadius: 20,
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
             ),
           ],
         ),
@@ -43,14 +62,14 @@ class _MainNavigationState extends State<MainNavigation> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
-              rippleColor: AppTheme.accent.withOpacity(0.15),
-              hoverColor: AppTheme.accent.withOpacity(0.1),
+              rippleColor: AppTheme.accent.withValues(alpha: 0.15),
+              hoverColor: AppTheme.accent.withValues(alpha: 0.1),
               gap: 8,
               activeColor: AppTheme.accent,
               iconSize: 24,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: AppTheme.accent.withOpacity(0.1),
+              tabBackgroundColor: AppTheme.accent.withValues(alpha: 0.1),
               color: AppTheme.textSecondary,
               tabs: const [
                 GButton(
@@ -73,6 +92,11 @@ class _MainNavigationState extends State<MainNavigation> {
               selectedIndex: _currentIndex,
               onTabChange: (index) {
                 setState(() => _currentIndex = index);
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
               },
             ),
           ),

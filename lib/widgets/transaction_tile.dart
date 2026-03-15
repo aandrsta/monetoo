@@ -76,7 +76,8 @@ class TransactionTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Color(transaction.categoryColor).withOpacity(0.12),
+                  color:
+                      Color(transaction.categoryColor).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -118,8 +119,8 @@ class TransactionTile extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color:
-                              Color(transaction.categoryColor).withOpacity(0.1),
+                          color: Color(transaction.categoryColor)
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
