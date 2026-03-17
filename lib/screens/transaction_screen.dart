@@ -295,7 +295,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
     // Group by date
     final Map<String, List<TransactionModel>> groups = {};
     for (final t in transactions) {
-      final key = '${t.date.year}-${t.date.month}-${t.date.day}';
+      final key = '${t.date.year}-'
+          '${t.date.month.toString().padLeft(2, '0')}-'
+          '${t.date.day.toString().padLeft(2, '0')}';
       groups[key] ??= [];
       groups[key]!.add(t);
     }
