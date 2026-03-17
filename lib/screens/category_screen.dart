@@ -13,7 +13,6 @@ import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
 
 // ── DATA IKON PER GRUP ──
-// Setiap grup punya 'label' dan 'icons' (list emoji)
 const List<Map<String, dynamic>> kIconGroups = [
   {
     'label': 'Makanan & Minuman',
@@ -84,7 +83,6 @@ const List<Map<String, dynamic>> kIconGroups = [
   },
 ];
 
-// Flat list semua ikon (untuk random acak)
 List<String> get kAllIcons =>
     kIconGroups.expand((g) => (g['icons'] as List).cast<String>()).toList();
 
@@ -735,7 +733,7 @@ class _CategoryScreenState extends State<CategoryScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) => Container(
-          height: MediaQuery.of(ctx).size.height * 0.88,
+          height: MediaQuery.of(ctx).size.height * 0.82,
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -844,83 +842,89 @@ class _CategoryScreenState extends State<CategoryScreen>
                       ),
                       const SizedBox(height: 20),
 
-                      // ── ICON PICKER DENGAN HEADING PER GRUP ──
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Pilih Ikon',
-                              style: TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w600)),
-                          Text('${allIcons.length} ikon',
-                              style: const TextStyle(
-                                  fontSize: 11, color: AppTheme.textSecondary)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Render setiap grup dengan heading + grid
-                      ...kIconGroups.map((group) {
-                        final groupIcons =
-                            (group['icons'] as List).cast<String>();
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Heading grup
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                group['label'] as String,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.textSecondary,
-                                  letterSpacing: 0.3,
+                      // ── ICON PICKER — tombol buka dialog ──
+                      const Text('Pilih Ikon',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          final result = await showDialog<String>(
+                            context: context,
+                            builder: (_) => _IconPickerDialog(
+                              selectedIcon: selectedIcon,
+                              selectedColor: selectedColor,
+                            ),
+                          );
+                          if (result != null) {
+                            setModal(() => selectedIcon = result);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.bgLight,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  Color(selectedColor).withValues(alpha: 0.5),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Color(selectedColor)
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Center(
+                                  child: Text(selectedIcon,
+                                      style: const TextStyle(fontSize: 28)),
                                 ),
                               ),
-                            ),
-                            // Grid ikon untuk grup ini
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 7,
-                                mainAxisSpacing: 8,
-                                crossAxisSpacing: 8,
-                              ),
-                              itemCount: groupIcons.length,
-                              itemBuilder: (_, i) {
-                                final ic = groupIcons[i];
-                                final isSel = selectedIcon == ic;
-                                return GestureDetector(
-                                  onTap: () =>
-                                      setModal(() => selectedIcon = ic),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    decoration: BoxDecoration(
-                                      color: isSel
-                                          ? Color(selectedColor)
-                                              .withValues(alpha: 0.18)
-                                          : AppTheme.bgLight,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                          color: isSel
-                                              ? Color(selectedColor)
-                                              : Colors.transparent,
-                                          width: 2),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Ikon terpilih',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.textSecondary)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${allIcons.length} ikon tersedia — ketuk untuk ganti',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textSecondary),
                                     ),
-                                    child: Center(
-                                        child: Text(ic,
-                                            style:
-                                                const TextStyle(fontSize: 20))),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        );
-                      }),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.accent.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text('Ganti',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.accent)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
                       // ── WARNA ──
                       Row(
@@ -1187,6 +1191,168 @@ class _CategoryScreenState extends State<CategoryScreen>
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: isSel ? Colors.white : AppTheme.textSecondary)),
+        ),
+      ),
+    );
+  }
+}
+
+// ── ICON PICKER DIALOG ──
+
+class _IconPickerDialog extends StatefulWidget {
+  final String selectedIcon;
+  final int selectedColor;
+
+  const _IconPickerDialog({
+    required this.selectedIcon,
+    required this.selectedColor,
+  });
+
+  @override
+  State<_IconPickerDialog> createState() => _IconPickerDialogState();
+}
+
+class _IconPickerDialogState extends State<_IconPickerDialog> {
+  late String _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.selectedIcon;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalIcons = kAllIcons.length;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: SizedBox(
+        width: double.maxFinite,
+        height: MediaQuery.of(context).size.height * 0.75,
+        child: Column(
+          children: [
+            // ── Header ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 16, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Pilih Ikon',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary)),
+                      Text('$totalIcons ikon tersedia',
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textSecondary)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      // Preview ikon yang sedang dipilih
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Color(widget.selectedColor)
+                              .withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                            child: Text(_selected,
+                                style: const TextStyle(fontSize: 22))),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded,
+                            color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 1, color: AppTheme.divider),
+
+            // ── Scrollable icon grid per grup ──
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                itemCount: kIconGroups.length,
+                itemBuilder: (_, groupIdx) {
+                  final group = kIconGroups[groupIdx];
+                  final groupIcons = (group['icons'] as List).cast<String>();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Heading grup
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          group['label'] as String,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textSecondary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      // Grid ikon
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                        ),
+                        itemCount: groupIcons.length,
+                        itemBuilder: (_, i) {
+                          final ic = groupIcons[i];
+                          final isSel = _selected == ic;
+                          return GestureDetector(
+                            onTap: () {
+                              // Langsung return hasil tanpa tombol konfirmasi
+                              Navigator.pop(context, ic);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 120),
+                              decoration: BoxDecoration(
+                                color: isSel
+                                    ? Color(widget.selectedColor)
+                                        .withValues(alpha: 0.18)
+                                    : AppTheme.bgLight,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: isSel
+                                        ? Color(widget.selectedColor)
+                                        : Colors.transparent,
+                                    width: 2),
+                              ),
+                              child: Center(
+                                  child: Text(ic,
+                                      style: const TextStyle(fontSize: 20))),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

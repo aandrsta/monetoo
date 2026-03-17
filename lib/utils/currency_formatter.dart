@@ -20,10 +20,12 @@ class CurrencyFormatter {
   }
 
   static String formatCompact(double amount) {
-    if (amount >= 1000000) {
-      return _compact.format(amount);
+    // < 100 juta → tampil angka penuh (Rp 5.000.000)
+    // >= 100 juta → pakai compact (Rp 150 Jt)
+    if (amount < 100000000) {
+      return _formatter.format(amount);
     }
-    return _formatter.format(amount);
+    return _compact.format(amount);
   }
 
   static String formatWithSign(double amount, {bool isExpense = false}) {
