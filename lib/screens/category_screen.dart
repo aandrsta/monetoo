@@ -12,6 +12,82 @@ import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
 
+// ── DATA IKON PER GRUP ──
+// Setiap grup punya 'label' dan 'icons' (list emoji)
+const List<Map<String, dynamic>> kIconGroups = [
+  {
+    'label': 'Makanan & Minuman',
+    'icons': [
+      '🍜',
+      '🍚',
+      '🍱',
+      '🥗',
+      '🍔',
+      '🍕',
+      '🍣',
+      '🌮',
+      '🍰',
+      '☕',
+      '🧋',
+      '🥤',
+      '🍺',
+      '🍷'
+    ],
+  },
+  {
+    'label': 'Transportasi',
+    'icons': ['🚗', '🛵', '🚕', '✈️', '🚌', '🚂', '🚢', '🛺', '⛽', '🅿️'],
+  },
+  {
+    'label': 'Belanja',
+    'icons': ['🛒', '👟', '👜', '👗', '💄', '🧴', '🕶️', '⌚', '💍', '🛍️'],
+  },
+  {
+    'label': 'Rumah & Utilitas',
+    'icons': ['🏠', '💡', '🔧', '🔌', '🚿', '🧹', '🪴', '🛋️', '🧺', '🏗️'],
+  },
+  {
+    'label': 'Kesehatan',
+    'icons': ['🏥', '💊', '🩺', '🧴', '🏋️', '🧘', '🦷', '👓', '🩹', '🧬'],
+  },
+  {
+    'label': 'Hiburan',
+    'icons': ['🎮', '🎬', '🎵', '🎧', '📺', '🎭', '🎪', '🎠', '🎯', '🎲'],
+  },
+  {
+    'label': 'Pendidikan',
+    'icons': ['🎓', '📚', '📝', '🖥️', '📖', '🔬', '✏️', '🏫', '📐', '🧑‍💻'],
+  },
+  {
+    'label': 'Anak & Hewan',
+    'icons': ['🍼', '🧸', '🎀', '🧒', '🐾', '🐶', '🐈', '🐠', '🐇', '🦜'],
+  },
+  {
+    'label': 'Keuangan & Investasi',
+    'icons': ['💰', '💳', '📈', '🏦', '💵', '🏧', '📉', '💹', '🪙', '🤑'],
+  },
+  {
+    'label': 'Bisnis & Kerja',
+    'icons': ['💼', '💻', '🤝', '🏪', '📊', '📋', '🖨️', '📞', '🏢', '📬'],
+  },
+  {
+    'label': 'Perjalanan & Liburan',
+    'icons': ['🏖️', '🏔️', '🗺️', '🧳', '🏨', '📸', '🎡', '⛺', '🌴', '🗼'],
+  },
+  {
+    'label': 'Hadiah & Sosial',
+    'icons': ['🎁', '🎉', '❤️', '🥳', '🎂', '💐', '🤲', '🙏', '💌', '🫂'],
+  },
+  {
+    'label': 'Lainnya',
+    'icons': ['📦', '✨', '⭐', '🎯', '🔥', '💫', '🌈', '🔮', '♻️', '🗑️'],
+  },
+];
+
+// Flat list semua ikon (untuk random acak)
+List<String> get kAllIcons =>
+    kIconGroups.expand((g) => (g['icons'] as List).cast<String>()).toList();
+
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
 
@@ -25,7 +101,6 @@ class _CategoryScreenState extends State<CategoryScreen>
   DateTime _selectedMonth = DateTime.now();
   TransactionType _selectedType = TransactionType.expense;
 
-  // Mode edit — toggle dengan tombol pensil
   bool _editMode = false;
 
   @override
@@ -185,7 +260,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                   child: Column(
                     children: [
-                      // Title row dengan tombol pensil
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -209,7 +283,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                               ),
                             ],
                           ),
-                          // Tombol pensil — toggle edit mode
                           GestureDetector(
                             onTap: () {
                               setState(() => _editMode = !_editMode);
@@ -251,7 +324,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                             icon: const Icon(Icons.chevron_left_rounded,
                                 color: AppTheme.textPrimary),
                           ),
-                          // Tap tengah → buka month picker
                           GestureDetector(
                             onTap: () => _pickMonth(context),
                             child: Row(
@@ -384,7 +456,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                         ],
                       ),
 
-                      // Banner edit mode
                       if (_editMode) ...[
                         const SizedBox(height: 12),
                         Container(
@@ -419,7 +490,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                   ),
                 ),
 
-                // ── GRID KATEGORI ──
                 Expanded(
                   child: _buildCategoryGrid(provider, monthlyTx),
                 ),
@@ -476,10 +546,8 @@ class _CategoryScreenState extends State<CategoryScreen>
     return GestureDetector(
       onTap: () {
         if (isEditMode) {
-          // Edit mode: buka sheet edit langsung
           _showCategorySheet(context, category, category.type);
         } else {
-          // Normal mode: buka tambah transaksi
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
@@ -528,7 +596,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                         style: const TextStyle(fontSize: 22)),
                   ),
                 ),
-                // Badge pensil kecil di pojok saat edit mode
                 if (isEditMode)
                   Positioned(
                     right: 0,
@@ -590,7 +657,6 @@ class _CategoryScreenState extends State<CategoryScreen>
   Widget _buildAddCategoryButton() {
     return GestureDetector(
       onTap: () {
-        // Saat tambah, nonaktifkan edit mode dulu
         if (_editMode) setState(() => _editMode = false);
         _showCategorySheet(context, null, _selectedType);
       },
@@ -642,32 +708,7 @@ class _CategoryScreenState extends State<CategoryScreen>
     int selectedColor = existing?.color ?? 0xFF7C6FFF;
     TransactionType selectedType = existing?.type ?? defaultType;
 
-    final icons = [
-      // Makanan & Minuman
-      '🍜', '☕', '🥗', '🍱', '🥤', '🍰',
-      // Transportasi
-      '🚗', '✈️', '🚕', '🛵',
-      // Belanja & Gaya Hidup
-      '🛒', '👟', '👜', '💄',
-      // Rumah & Utilitas
-      '🏠', '💡', '🔧', '🧹', '🪴',
-      // Kesehatan
-      '🏥', '💊', '🧴', '🏋️',
-      // Hiburan
-      '🎮', '🎬', '🎵', '🎧', '📺',
-      // Pendidikan
-      '🎓', '📚', '📝', '🖥️',
-      // Hewan & Anak
-      '🐾', '🐶', '🐈', '🍼',
-      // Keuangan & Investasi
-      '💰', '💳', '📈', '🏦', '💵', '🏧',
-      // Bisnis & Kerja
-      '💼', '💻', '🤝', '🏪', '📊',
-      // Hadiah & Sosial
-      '🎁', '🎉', '❤️',
-      // Lainnya
-      '📦', '✨', '⭐', '🎯', '🔥',
-    ];
+    final allIcons = kAllIcons;
 
     final colors = [
       0xFFFF6B6B,
@@ -694,7 +735,7 @@ class _CategoryScreenState extends State<CategoryScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) => Container(
-          height: MediaQuery.of(ctx).size.height * 0.85,
+          height: MediaQuery.of(ctx).size.height * 0.88,
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -777,14 +818,15 @@ class _CategoryScreenState extends State<CategoryScreen>
                       ),
                       const SizedBox(height: 20),
 
-                      // Acak
+                      // Tombol acak
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
                           onPressed: () {
                             final rng = Random();
                             setModal(() {
-                              selectedIcon = icons[rng.nextInt(icons.length)];
+                              selectedIcon =
+                                  allIcons[rng.nextInt(allIcons.length)];
                               selectedColor =
                                   colors[rng.nextInt(colors.length)];
                             });
@@ -802,86 +844,85 @@ class _CategoryScreenState extends State<CategoryScreen>
                       ),
                       const SizedBox(height: 20),
 
-                      // Icon picker (3 baris pertama + tombol lihat semua)
+                      // ── ICON PICKER DENGAN HEADING PER GRUP ──
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Pilih Ikon',
                               style: TextStyle(
                                   fontSize: 13, fontWeight: FontWeight.w600)),
-                          Text('${icons.length} ikon',
+                          Text('${allIcons.length} ikon',
                               style: const TextStyle(
                                   fontSize: 11, color: AppTheme.textSecondary)),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 6,
-                          mainAxisSpacing: 8,
-                          crossAxisSpacing: 8,
-                        ),
-                        itemCount: 18,
-                        itemBuilder: (_, i) {
-                          if (i == 17) {
-                            return GestureDetector(
-                              onTap: () async {
-                                final result = await showDialog<String>(
-                                  context: context,
-                                  builder: (_) => _IconPickerDialog(
-                                    icons: icons,
-                                    selectedIcon: selectedIcon,
-                                    selectedColor: selectedColor,
+                      const SizedBox(height: 12),
+
+                      // Render setiap grup dengan heading + grid
+                      ...kIconGroups.map((group) {
+                        final groupIcons =
+                            (group['icons'] as List).cast<String>();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Heading grup
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                group['label'] as String,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                            // Grid ikon untuk grup ini
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 7,
+                                mainAxisSpacing: 8,
+                                crossAxisSpacing: 8,
+                              ),
+                              itemCount: groupIcons.length,
+                              itemBuilder: (_, i) {
+                                final ic = groupIcons[i];
+                                final isSel = selectedIcon == ic;
+                                return GestureDetector(
+                                  onTap: () =>
+                                      setModal(() => selectedIcon = ic),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    decoration: BoxDecoration(
+                                      color: isSel
+                                          ? Color(selectedColor)
+                                              .withValues(alpha: 0.18)
+                                          : AppTheme.bgLight,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: isSel
+                                              ? Color(selectedColor)
+                                              : Colors.transparent,
+                                          width: 2),
+                                    ),
+                                    child: Center(
+                                        child: Text(ic,
+                                            style:
+                                                const TextStyle(fontSize: 20))),
                                   ),
                                 );
-                                if (result != null) {
-                                  setModal(() => selectedIcon = result);
-                                }
                               },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: AppTheme.accent.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: AppTheme.accent
-                                          .withValues(alpha: 0.3),
-                                      width: 2),
-                                ),
-                                child: const Center(
-                                    child: Icon(Icons.add_rounded,
-                                        color: AppTheme.accent, size: 24)),
-                              ),
-                            );
-                          }
-                          return GestureDetector(
-                            onTap: () =>
-                                setModal(() => selectedIcon = icons[i]),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: selectedIcon == icons[i]
-                                    ? Color(selectedColor)
-                                        .withValues(alpha: 0.15)
-                                    : AppTheme.bgLight,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                    color: selectedIcon == icons[i]
-                                        ? Color(selectedColor)
-                                        : Colors.transparent,
-                                    width: 2),
-                              ),
-                              child: Center(
-                                  child: Text(icons[i],
-                                      style: const TextStyle(fontSize: 22))),
                             ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }),
 
-                      // Color picker
+                      // ── WARNA ──
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -986,7 +1027,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                               Navigator.pop(ctx);
                               AppToast.success(
                                   context, 'Kategori berhasil diperbarui');
-                              // Matikan edit mode setelah edit
                               setState(() => _editMode = false);
                             }
                           },
@@ -1097,8 +1137,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                         return;
                       }
                       provider.deleteCategory(category.id);
-                      Navigator.pop(ctx); // tutup confirm
-                      Navigator.pop(sheetCtx); // tutup edit sheet
+                      Navigator.pop(ctx);
+                      Navigator.pop(sheetCtx);
                       AppToast.success(context, 'Kategori berhasil dihapus');
                       setState(() => _editMode = false);
                     },
@@ -1147,84 +1187,6 @@ class _CategoryScreenState extends State<CategoryScreen>
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: isSel ? Colors.white : AppTheme.textSecondary)),
-        ),
-      ),
-    );
-  }
-}
-
-// ── ICON PICKER DIALOG ──
-
-class _IconPickerDialog extends StatelessWidget {
-  final List<String> icons;
-  final String selectedIcon;
-  final int selectedColor;
-
-  const _IconPickerDialog({
-    required this.icons,
-    required this.selectedIcon,
-    required this.selectedColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        width: double.maxFinite,
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Pilih Ikon',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary)),
-                  Text('${icons.length} ikon',
-                      style: const TextStyle(
-                          fontSize: 13, color: AppTheme.textSecondary)),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 6,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                ),
-                itemCount: icons.length,
-                itemBuilder: (context, i) => GestureDetector(
-                  onTap: () => Navigator.pop(context, icons[i]),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: selectedIcon == icons[i]
-                          ? Color(selectedColor).withValues(alpha: 0.15)
-                          : AppTheme.bgLight,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                          color: selectedIcon == icons[i]
-                              ? Color(selectedColor)
-                              : Colors.transparent,
-                          width: 2),
-                    ),
-                    child: Center(
-                        child: Text(icons[i],
-                            style: const TextStyle(fontSize: 22))),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
