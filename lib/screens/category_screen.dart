@@ -50,6 +50,113 @@ class _CategoryScreenState extends State<CategoryScreen>
     });
   }
 
+  Future<void> _pickMonth(BuildContext context) async {
+    int pickedYear = _selectedMonth.year;
+    int pickedMonth = _selectedMonth.month;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Pilih Bulan',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          content: SizedBox(
+            width: 280,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () => setD(() => pickedYear--),
+                      icon: const Icon(Icons.chevron_left_rounded),
+                    ),
+                    Text('$pickedYear',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    IconButton(
+                      onPressed: () => setD(() => pickedYear++),
+                      icon: const Icon(Icons.chevron_right_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.2,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                  ),
+                  itemCount: 12,
+                  itemBuilder: (_, i) {
+                    final m = i + 1;
+                    final isSelected = m == pickedMonth;
+                    final monthName = [
+                      'Jan',
+                      'Feb',
+                      'Mar',
+                      'Apr',
+                      'Mei',
+                      'Jun',
+                      'Jul',
+                      'Agu',
+                      'Sep',
+                      'Okt',
+                      'Nov',
+                      'Des'
+                    ][i];
+                    return GestureDetector(
+                      onTap: () => setD(() => pickedMonth = m),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected ? AppTheme.accent : AppTheme.bgLight,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(monthName,
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : AppTheme.textSecondary)),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal',
+                  style: TextStyle(color: AppTheme.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedMonth = DateTime(pickedYear, pickedMonth);
+                });
+                Navigator.pop(ctx);
+              },
+              child:
+                  const Text('Pilih', style: TextStyle(color: AppTheme.accent)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,27 +251,29 @@ class _CategoryScreenState extends State<CategoryScreen>
                             icon: const Icon(Icons.chevron_left_rounded,
                                 color: AppTheme.textPrimary),
                           ),
-                          Text(
-                            DateFormatter.formatMonthYear(_selectedMonth),
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary),
+                          // Tap tengah → buka month picker
+                          GestureDetector(
+                            onTap: () => _pickMonth(context),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  DateFormatter.formatMonthYear(_selectedMonth),
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.textPrimary),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.keyboard_arrow_down_rounded,
+                                    size: 18, color: AppTheme.textSecondary),
+                              ],
+                            ),
                           ),
                           IconButton(
-                            onPressed: _selectedMonth.month ==
-                                        DateTime.now().month &&
-                                    _selectedMonth.year == DateTime.now().year
-                                ? null
-                                : () => _changeMonth(1),
-                            icon: Icon(
-                              Icons.chevron_right_rounded,
-                              color: _selectedMonth.month ==
-                                          DateTime.now().month &&
-                                      _selectedMonth.year == DateTime.now().year
-                                  ? AppTheme.divider
-                                  : AppTheme.textPrimary,
-                            ),
+                            onPressed: () => _changeMonth(1),
+                            icon: const Icon(Icons.chevron_right_rounded,
+                                color: AppTheme.textPrimary),
                           ),
                         ],
                       ),
@@ -534,88 +643,30 @@ class _CategoryScreenState extends State<CategoryScreen>
     TransactionType selectedType = existing?.type ?? defaultType;
 
     final icons = [
-      '🍜',
-      '🍕',
-      '☕',
-      '🍔',
-      '🍰',
-      '🍱',
-      '🍗',
-      '🥗',
-      '🍛',
-      '🍝',
-      '🚗',
-      '🚌',
-      '✈️',
-      '🚕',
-      '🏍️',
-      '🚲',
-      '🚇',
-      '⛴️',
-      '🛍️',
-      '👗',
-      '👕',
-      '👟',
-      '🎽',
-      '👜',
-      '💡',
-      '📱',
-      '💻',
-      '⌚',
-      '📷',
-      '🖨️',
-      '🏥',
-      '💊',
-      '💉',
-      '🏨',
-      '🎮',
-      '🎬',
-      '🎵',
-      '🎸',
-      '🎤',
-      '🎧',
-      '📚',
-      '📝',
-      '✏️',
-      '📖',
-      '🏋️',
-      '⚽',
-      '🏀',
-      '🎾',
-      '⛽',
-      '🏠',
-      '🏢',
-      '🏦',
-      '💼',
-      '📈',
-      '📊',
-      '💹',
-      '🎁',
-      '💰',
-      '💳',
-      '💵',
-      '💸',
-      '🏧',
-      '🔧',
-      '🔨',
-      '🛠️',
-      '🌿',
-      '🌺',
-      '🌸',
-      '🐾',
-      '🐕',
-      '🐈',
-      '📦',
-      '✨',
-      '⭐',
-      '🎯',
-      '❤️',
-      '🔥',
-      '🎨',
-      '📅',
-      '🍎',
-      '🥤',
-      '🍿',
+      // Makanan & Minuman
+      '🍜', '☕', '🥗', '🍱', '🥤', '🍰',
+      // Transportasi
+      '🚗', '✈️', '🚕', '🛵',
+      // Belanja & Gaya Hidup
+      '🛒', '👟', '👜', '💄',
+      // Rumah & Utilitas
+      '🏠', '💡', '🔧', '🧹', '🪴',
+      // Kesehatan
+      '🏥', '💊', '🧴', '🏋️',
+      // Hiburan
+      '🎮', '🎬', '🎵', '🎧', '📺',
+      // Pendidikan
+      '🎓', '📚', '📝', '🖥️',
+      // Hewan & Anak
+      '🐾', '🐶', '🐈', '🍼',
+      // Keuangan & Investasi
+      '💰', '💳', '📈', '🏦', '💵', '🏧',
+      // Bisnis & Kerja
+      '💼', '💻', '🤝', '🏪', '📊',
+      // Hadiah & Sosial
+      '🎁', '🎉', '❤️',
+      // Lainnya
+      '📦', '✨', '⭐', '🎯', '🔥',
     ];
 
     final colors = [

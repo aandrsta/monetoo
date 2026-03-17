@@ -70,7 +70,7 @@ class CategoryModel {
 List<CategoryModel> getDefaultCategories() {
   final now = DateTime.now();
   return [
-    // Expense categories
+    // ── PENGELUARAN ──
     CategoryModel(
         id: 'cat_makanan',
         name: 'Makanan & Minuman',
@@ -90,14 +90,14 @@ List<CategoryModel> getDefaultCategories() {
     CategoryModel(
         id: 'cat_belanja',
         name: 'Belanja',
-        icon: '🛍️',
+        icon: '🛒',
         color: 0xFF45B7D1,
         type: TransactionType.expense,
         isDefault: true,
         createdAt: now),
     CategoryModel(
         id: 'cat_tagihan',
-        name: 'Tagihan',
+        name: 'Tagihan & Utilitas',
         icon: '💡',
         color: 0xFFFFBE0B,
         type: TransactionType.expense,
@@ -122,8 +122,32 @@ List<CategoryModel> getDefaultCategories() {
     CategoryModel(
         id: 'cat_pendidikan',
         name: 'Pendidikan',
-        icon: '📚',
+        icon: '🎓',
         color: 0xFF6C63FF,
+        type: TransactionType.expense,
+        isDefault: true,
+        createdAt: now),
+    CategoryModel(
+        id: 'cat_rumah',
+        name: 'Rumah & Perabot',
+        icon: '🏠',
+        color: 0xFF51CF66,
+        type: TransactionType.expense,
+        isDefault: true,
+        createdAt: now),
+    CategoryModel(
+        id: 'cat_perawatan',
+        name: 'Perawatan Diri',
+        icon: '🧴',
+        color: 0xFFFF922B,
+        type: TransactionType.expense,
+        isDefault: true,
+        createdAt: now),
+    CategoryModel(
+        id: 'cat_hewan',
+        name: 'Hewan Peliharaan',
+        icon: '🐾',
+        color: 0xFF9D85FF,
         type: TransactionType.expense,
         isDefault: true,
         createdAt: now),
@@ -136,7 +160,7 @@ List<CategoryModel> getDefaultCategories() {
         isDefault: true,
         createdAt: now),
 
-    // Income categories
+    // ── PEMASUKAN ──
     CategoryModel(
         id: 'cat_gaji',
         name: 'Gaji',
@@ -158,6 +182,14 @@ List<CategoryModel> getDefaultCategories() {
         name: 'Investasi',
         icon: '📈',
         color: 0xFF20C997,
+        type: TransactionType.income,
+        isDefault: true,
+        createdAt: now),
+    CategoryModel(
+        id: 'cat_bisnis',
+        name: 'Bisnis',
+        icon: '🏪',
+        color: 0xFFFFBE0B,
         type: TransactionType.income,
         isDefault: true,
         createdAt: now),

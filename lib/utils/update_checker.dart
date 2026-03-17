@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'app_theme.dart';
@@ -13,13 +13,13 @@ class UpdateChecker {
 
   static Future<void> check(BuildContext context) async {
     try {
-      final response = await http
-          .get(Uri.parse(_apiUrl))
-          .timeout(const Duration(seconds: 5));
+      final dio = Dio();
+      final response =
+          await dio.get(_apiUrl).timeout(const Duration(seconds: 5));
 
       if (response.statusCode != 200) return;
 
-      final data = jsonDecode(response.body);
+      final data = response.data as Map<String, dynamic>;
       final latestTag = (data['tag_name'] as String).replaceAll('v', '');
       final downloadUrl = (data['assets'] as List).firstWhere(
         (a) => (a['name'] as String).endsWith('.apk'),
@@ -29,7 +29,7 @@ class UpdateChecker {
       if (downloadUrl == null) return;
 
       final info = await PackageInfo.fromPlatform();
-      final currentVersion = info.version; // misal "1.0.0"
+      final currentVersion = info.version;
 
       if (_isNewer(latestTag, currentVersion)) {
         if (context.mounted) {
@@ -78,7 +78,6 @@ class UpdateChecker {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Icon
             Container(
               width: 56,
               height: 56,

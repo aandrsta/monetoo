@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../utils/app_theme.dart';
+import '../utils/update_checker.dart';
 import 'transaction_screen.dart';
 import 'category_screen.dart';
 import 'statistics_screen.dart';
@@ -30,6 +31,14 @@ class _MainNavigationState extends State<MainNavigation> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+
+    // Cek update setelah frame pertama render
+    // Data SQLite tidak akan hilang karena update APK tidak uninstall app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        UpdateChecker.check(context);
+      }
+    });
   }
 
   @override

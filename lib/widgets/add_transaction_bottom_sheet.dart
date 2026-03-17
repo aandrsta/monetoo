@@ -32,12 +32,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   double? _previousValue;
   String? _operation;
   bool _shouldResetAmount = false;
-  bool _isNoteExpanded = false; // expand note pill jadi TextField
+  bool _isNoteExpanded = false;
   CategoryModel? _selectedCategory;
   AccountModel? _selectedAccount;
-  // FIX: default pakai DateTime.now() termasuk jam
   DateTime _selectedDate = DateTime.now();
   late final TextEditingController _noteController;
+  late final FocusNode _noteFocusNode;
 
   TransactionType _selectedType = TransactionType.expense;
 
@@ -53,6 +53,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   @override
   void initState() {
     super.initState();
+    _noteFocusNode = FocusNode();
     _noteController = TextEditingController();
     if (_isEditing) {
       final t = widget.transaction!;
@@ -121,7 +122,20 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   @override
   void dispose() {
     _noteController.dispose();
+    _noteFocusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Saat keyboard dismiss (viewInsets.bottom turun ke 0), collapse note field
+    final inset = MediaQuery.of(context).viewInsets.bottom;
+    if (inset == 0 && _isNoteExpanded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _isNoteExpanded = false);
+      });
+    }
   }
 
   void _onTypeChanged(TransactionType type) {
@@ -133,8 +147,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       }
     });
   }
-
-  // ── KALKULATOR ──
 
   void _onNumberPressed(String number) {
     setState(() {
@@ -338,17 +350,20 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         .replaceAll(',', '.');
   }
 
-  // ── BUILD ──
-
   @override
   Widget build(BuildContext context) {
     final isExpense = _selectedType == TransactionType.expense;
     final typeColor = isExpense ? AppTheme.expense : AppTheme.income;
     final hasOperation = _previousValue != null && _operation != null;
     final hasNote = _noteController.text.trim().isNotEmpty;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    // Tinggi numpad fixed: 5 baris x 52 + 4 gap x 8 + padding 10+12
+    const double numpadHeight = 5 * 52 + 4 * 8 + 10 + 12;
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
+      // Cukup tinggi untuk konten + numpad, naik otomatis saat keyboard muncul
+      height: MediaQuery.of(context).size.height * 0.88 + bottomInset,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -366,7 +381,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   borderRadius: BorderRadius.circular(2)),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // Type selector
           if (!_isEditing)
@@ -392,9 +407,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // Account & Category
+          // Account & Category row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
@@ -483,9 +498,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
-          // Amount
+          // Amount display
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
@@ -500,12 +515,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           ),
           const SizedBox(height: 10),
 
-          // ── INFO BAR: tanggal + catatan (compact) ──
+          // Info bar: tanggal + catatan pill
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               children: [
-                // Pill tanggal
                 GestureDetector(
                   onTap: _pickDate,
                   child: Container(
@@ -550,7 +564,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Pill catatan — expandable jadi TextField
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
@@ -610,19 +623,21 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             ),
           ),
 
-          // Note field — muncul di bawah pill saat expanded
+          // Note field — expand di antara pill dan divider
           AnimatedSize(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
             child: _isNoteExpanded
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                     child: TextField(
                       controller: _noteController,
-                      maxLines: 5,
+                      maxLines: 3,
                       minLines: 1,
                       autofocus: true,
+                      focusNode: _noteFocusNode,
                       textInputAction: TextInputAction.done,
+                      style: const TextStyle(fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Tulis catatan...',
                         isDense: true,
@@ -636,6 +651,10 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide:
                                 BorderSide(color: Colors.grey.shade300)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                                color: AppTheme.accent, width: 1.5)),
                       ),
                       onChanged: (v) => setState(() {}),
                       onSubmitted: (_) =>
@@ -645,74 +664,69 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 : const SizedBox.shrink(),
           ),
 
-          // Jarak ke numpad — fixed, tidak pakai Spacer
-          const SizedBox(height: 10),
+          _isNoteExpanded ? const SizedBox.shrink() : const Spacer(),
           const Divider(height: 1, color: AppTheme.divider),
 
-          // ── NUMPAD ──
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _numRow([
-                  _numBtn('7', () => _onNumberPressed('7')),
-                  _numBtn('8', () => _onNumberPressed('8')),
-                  _numBtn('9', () => _onNumberPressed('9')),
-                  _opBtn('÷', () => _onOperatorPressed('÷')),
-                ]),
-                const SizedBox(height: 8),
-                _numRow([
-                  _numBtn('4', () => _onNumberPressed('4')),
-                  _numBtn('5', () => _onNumberPressed('5')),
-                  _numBtn('6', () => _onNumberPressed('6')),
-                  _opBtn('×', () => _onOperatorPressed('×')),
-                ]),
-                const SizedBox(height: 8),
-                _numRow([
-                  _numBtn('1', () => _onNumberPressed('1')),
-                  _numBtn('2', () => _onNumberPressed('2')),
-                  _numBtn('3', () => _onNumberPressed('3')),
-                  _opBtn('-', () => _onOperatorPressed('-')),
-                ]),
-                const SizedBox(height: 8),
-                _numRow([
-                  _opBtn('C', _onClear),
-                  _numBtn('0', () => _onNumberPressed('0')),
-                  _numBtn('00', _onDoubleZeroPressed),
-                  _opBtn('+', () => _onOperatorPressed('+')),
-                ]),
-                const SizedBox(height: 8),
-                // Baris bawah: ⌫ | = | Simpan
-                Row(
-                  children: [
-                    Expanded(
-                        flex: 1,
-                        child:
-                            _iconBtn(Icons.backspace_outlined, _onBackspace)),
-                    const SizedBox(width: 8),
-                    if (hasOperation) ...[
+          // Numpad — fixed di bawah, tinggi tetap
+          SizedBox(
+            height: numpadHeight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _numRow([
+                    _numBtn('7', () => _onNumberPressed('7')),
+                    _numBtn('8', () => _onNumberPressed('8')),
+                    _numBtn('9', () => _onNumberPressed('9')),
+                    _opBtn('÷', () => _onOperatorPressed('÷')),
+                  ]),
+                  _numRow([
+                    _numBtn('4', () => _onNumberPressed('4')),
+                    _numBtn('5', () => _onNumberPressed('5')),
+                    _numBtn('6', () => _onNumberPressed('6')),
+                    _opBtn('×', () => _onOperatorPressed('×')),
+                  ]),
+                  _numRow([
+                    _numBtn('1', () => _onNumberPressed('1')),
+                    _numBtn('2', () => _onNumberPressed('2')),
+                    _numBtn('3', () => _onNumberPressed('3')),
+                    _opBtn('-', () => _onOperatorPressed('-')),
+                  ]),
+                  _numRow([
+                    _opBtn('C', _onClear),
+                    _numBtn('0', () => _onNumberPressed('0')),
+                    _numBtn('00', _onDoubleZeroPressed),
+                    _opBtn('+', () => _onOperatorPressed('+')),
+                  ]),
+                  Row(
+                    children: [
                       Expanded(
-                        flex: 1,
-                        child: _actionBtn(
-                            label: '=',
-                            color: Colors.orange.shade600,
-                            onTap: _onEqualsPressed),
-                      ),
+                          flex: 1,
+                          child:
+                              _iconBtn(Icons.backspace_outlined, _onBackspace)),
                       const SizedBox(width: 8),
+                      if (hasOperation) ...[
+                        Expanded(
+                          flex: 1,
+                          child: _actionBtn(
+                              label: '=',
+                              color: Colors.orange.shade600,
+                              onTap: _onEqualsPressed),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(flex: 2, child: _saveBtn(typeColor)),
                     ],
-                    Expanded(flex: 2, child: _saveBtn(typeColor)),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-  // ── WIDGET HELPERS ──
 
   Widget _numRow(List<Widget> children) {
     final List<Widget> spaced = [];
@@ -863,8 +877,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       ),
     );
   }
-
-  // ── PICKERS ──
 
   void _showCategoryPicker() {
     final provider = context.read<FinanceProvider>();
@@ -1058,7 +1070,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    // FIX: "Kemarin" pakai jam sekarang, bukan midnight
     final yesterday =
         DateTime(now.year, now.month, now.day - 1, now.hour, now.minute);
 
@@ -1087,7 +1098,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary)),
             const SizedBox(height: 8),
-            // Tampilkan tanggal yang sedang dipilih
             Text(
               DateFormat('EEEE, d MMMM yyyy • HH:mm', 'id_ID')
                   .format(_selectedDate),
@@ -1101,7 +1111,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               subtitle: Text(DateFormat('d MMMM yyyy', 'id_ID').format(now),
                   style: const TextStyle(fontSize: 12)),
               onTap: () {
-                // Hari ini pakai jam sekarang
                 setState(() => _selectedDate = DateTime.now());
                 Navigator.pop(ctx);
               },
@@ -1139,7 +1148,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ),
                 );
                 if (picked != null && mounted) {
-                  // FIX: gabungkan tanggal yang dipilih dengan jam sekarang
                   final now2 = DateTime.now();
                   setState(() => _selectedDate = DateTime(
                         picked.year,
@@ -1148,12 +1156,10 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                         now2.hour,
                         now2.minute,
                       ));
-                  // Tawarkan untuk ubah jam juga
                   _pickTime();
                 }
               },
             ),
-            // FIX: opsi ubah jam
             ListTile(
               leading:
                   Icon(Icons.access_time_rounded, color: Colors.blue.shade700),

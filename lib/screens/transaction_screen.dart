@@ -131,20 +131,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => const AddTransactionBottomSheet(),
-          );
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah'),
-        backgroundColor: AppTheme.accent,
-        foregroundColor: Colors.white,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 0),
+        child: FloatingActionButton.extended(
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => const AddTransactionBottomSheet(),
+            );
+          },
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Tambah'),
+          backgroundColor: AppTheme.accent,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          highlightElevation: 0,
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
@@ -392,7 +398,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
     final sortedKeys = groups.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
       itemCount: sortedKeys.length,
       itemBuilder: (context, index) {
         final key = sortedKeys[index];
