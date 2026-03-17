@@ -32,16 +32,23 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   double? _previousValue;
   String? _operation;
   bool _shouldResetAmount = false;
-  bool _isNoteEditorVisible = false;
+  bool _isNoteExpanded = false; // expand note pill jadi TextField
   CategoryModel? _selectedCategory;
   AccountModel? _selectedAccount;
+  // FIX: default pakai DateTime.now() termasuk jam
   DateTime _selectedDate = DateTime.now();
-  String _note = '';
   late final TextEditingController _noteController;
 
   TransactionType _selectedType = TransactionType.expense;
 
   bool get _isEditing => widget.transaction != null;
+
+  bool get _isDateModified {
+    final now = DateTime.now();
+    return !(_selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day);
+  }
 
   @override
   void initState() {
@@ -52,40 +59,36 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       _amount = t.amount.toStringAsFixed(0);
       _displayAmount = _amount;
       _selectedDate = t.date;
-      _note = t.note ?? '';
-      _noteController.text = _note;
+      _noteController.text = t.note ?? '';
       _selectedType = t.type;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final provider = context.read<FinanceProvider>();
         final categories = [
           ...provider.expenseCategories,
-          ...provider.incomeCategories
+          ...provider.incomeCategories,
         ];
         setState(() {
           _selectedCategory = categories.firstWhere(
             (cat) => cat.id == t.categoryId,
             orElse: () => categories.first,
           );
-          final accounts = [
-            ...provider.regularAccounts,
-            ...provider.savingsAccounts
-          ];
+          final accounts = provider.accounts;
           if (accounts.isEmpty) {
             _selectedAccount = null;
           } else if (t.accountId != null) {
             try {
               _selectedAccount =
-                  accounts.firstWhere((acc) => acc.id == t.accountId);
+                  accounts.firstWhere((a) => a.id == t.accountId);
             } catch (_) {
               try {
-                _selectedAccount = accounts.firstWhere((acc) => acc.isPrimary);
+                _selectedAccount = accounts.firstWhere((a) => a.isPrimary);
               } catch (_) {
                 _selectedAccount = accounts.first;
               }
             }
           } else {
             try {
-              _selectedAccount = accounts.firstWhere((acc) => acc.isPrimary);
+              _selectedAccount = accounts.firstWhere((a) => a.isPrimary);
             } catch (_) {
               _selectedAccount = accounts.first;
             }
@@ -97,19 +100,15 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         _selectedCategory = widget.initialCategory;
         _selectedType = widget.initialCategory!.type;
       }
-      _noteController.text = _note;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final provider = context.read<FinanceProvider>();
-        final accounts = [
-          ...provider.regularAccounts,
-          ...provider.savingsAccounts
-        ];
+        final accounts = provider.accounts;
         setState(() {
           if (accounts.isEmpty) {
             _selectedAccount = null;
           } else {
             try {
-              _selectedAccount = accounts.firstWhere((acc) => acc.isPrimary);
+              _selectedAccount = accounts.firstWhere((a) => a.isPrimary);
             } catch (_) {
               _selectedAccount = accounts.first;
             }
@@ -213,25 +212,22 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   void _updateDisplay() {
     if (_previousValue != null && _operation != null) {
-      final firstNum = _formatNumberDisplay(_previousValue!);
-      final secondNum = _shouldResetAmount
-          ? '0'
-          : _formatNumberDisplay(double.tryParse(_amount) ?? 0);
+      final firstNum = _fmt(_previousValue!);
+      final secondNum =
+          _shouldResetAmount ? '0' : _fmt(double.tryParse(_amount) ?? 0);
       _displayAmount = '$firstNum $_operation $secondNum';
     } else {
       _displayAmount = _amount;
     }
   }
 
-  String _formatNumberDisplay(double number) {
-    if (number == number.truncateToDouble()) {
+  String _fmt(double n) {
+    if (n == n.truncateToDouble()) {
       return NumberFormat('#,###', 'id_ID')
-          .format(number.toInt())
+          .format(n.toInt())
           .replaceAll(',', '.');
     }
-    return NumberFormat('#,##0.##', 'id_ID')
-        .format(number)
-        .replaceAll(',', '.');
+    return NumberFormat('#,##0.##', 'id_ID').format(n).replaceAll(',', '.');
   }
 
   void _onBackspace() {
@@ -262,23 +258,17 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     });
   }
 
-  // ── SIMPAN ──
-
   void _onSave() async {
-    // Validasi kategori — toast muncul di atas sheet, tidak ketutup
     if (_selectedCategory == null) {
       AppToast.error(context, 'Pilih kategori terlebih dahulu');
       return;
     }
-
-    // Selesaikan kalkulasi pending sebelum simpan
     if (_previousValue != null && _operation != null) {
       setState(() {
         _calculateInternal();
         _updateDisplay();
       });
     }
-
     final amount = double.tryParse(_amount.isEmpty ? '0' : _amount) ?? 0;
     if (amount <= 0) {
       AppToast.error(context, 'Masukkan nominal transaksi');
@@ -355,6 +345,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     final isExpense = _selectedType == TransactionType.expense;
     final typeColor = isExpense ? AppTheme.expense : AppTheme.income;
     final hasOperation = _previousValue != null && _operation != null;
+    final hasNote = _noteController.text.trim().isNotEmpty;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
@@ -364,47 +355,44 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       ),
       child: Column(
         children: [
+          // Handle
           Center(
             child: Container(
               width: 40,
               height: 4,
               margin: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2)),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Type selector
           if (!_isEditing)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
-                height: 44,
+                height: 42,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     _buildTypeTab(
-                      label: 'Pengeluaran',
-                      type: TransactionType.expense,
-                      activeColor: AppTheme.expense,
-                    ),
+                        label: 'Pengeluaran',
+                        type: TransactionType.expense,
+                        activeColor: AppTheme.expense),
                     _buildTypeTab(
-                      label: 'Pemasukan',
-                      type: TransactionType.income,
-                      activeColor: AppTheme.income,
-                    ),
+                        label: 'Pemasukan',
+                        type: TransactionType.income,
+                        activeColor: AppTheme.income),
                   ],
                 ),
               ),
             ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
 
           // Account & Category
           Padding(
@@ -419,36 +407,34 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       children: [
                         Text('Dari akun',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: _selectedAccount != null
-                                    ? Color(_selectedAccount!.color)
-                                        .withValues(alpha: 0.2)
-                                    : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(_selectedAccount?.icon ?? '💳',
-                                  style: const TextStyle(fontSize: 20)),
+                                fontSize: 11, color: Colors.grey.shade500)),
+                        const SizedBox(height: 6),
+                        Row(children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: _selectedAccount != null
+                                  ? Color(_selectedAccount!.color)
+                                      .withValues(alpha: 0.2)
+                                  : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _selectedAccount?.name ?? 'Pilih',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade800),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            child: Text(_selectedAccount?.icon ?? '💳',
+                                style: const TextStyle(fontSize: 18)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _selectedAccount?.name ?? 'Pilih',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade800),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
+                          ),
+                        ]),
                       ],
                     ),
                   ),
@@ -462,36 +448,34 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       children: [
                         Text('Ke kategori',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade600)),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: _selectedCategory != null
-                                    ? Color(_selectedCategory!.color)
-                                        .withValues(alpha: 0.2)
-                                    : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(_selectedCategory?.icon ?? '📦',
-                                  style: const TextStyle(fontSize: 20)),
+                                fontSize: 11, color: Colors.grey.shade500)),
+                        const SizedBox(height: 6),
+                        Row(children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: _selectedCategory != null
+                                  ? Color(_selectedCategory!.color)
+                                      .withValues(alpha: 0.2)
+                                  : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _selectedCategory?.name ?? 'Pilih',
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade800),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                            child: Text(_selectedCategory?.icon ?? '📦',
+                                style: const TextStyle(fontSize: 18)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _selectedCategory?.name ?? 'Pilih',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade800),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
-                        ),
+                          ),
+                        ]),
                       ],
                     ),
                   ),
@@ -499,137 +483,230 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
 
-          // Amount display
+          // Amount
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
               'Rp ${_getFormattedAmount()}',
               style: TextStyle(
-                fontSize: hasOperation ? 30 : 44,
-                fontWeight: FontWeight.w700,
-                color: typeColor,
-              ),
+                  fontSize: hasOperation ? 28 : 40,
+                  fontWeight: FontWeight.w700,
+                  color: typeColor),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          // Action buttons
+          // ── INFO BAR: tanggal + catatan (compact) ──
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildActionButton(
-                  icon: Icons.calendar_today_outlined,
-                  label: 'Tanggal',
+                // Pill tanggal
+                GestureDetector(
                   onTap: _pickDate,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: _isDateModified
+                          ? AppTheme.accent.withValues(alpha: 0.08)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                      border: _isDateModified
+                          ? Border.all(
+                              color: AppTheme.accent.withValues(alpha: 0.3))
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13,
+                            color: _isDateModified
+                                ? AppTheme.accent
+                                : Colors.grey.shade500),
+                        const SizedBox(width: 5),
+                        Text(
+                          _isDateModified
+                              ? DateFormat('d MMM • HH:mm', 'id_ID')
+                                  .format(_selectedDate)
+                              : 'Hari ini • ${DateFormat('HH:mm').format(_selectedDate)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: _isDateModified
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            color: _isDateModified
+                                ? AppTheme.accent
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 24),
-                _buildActionButton(
-                  icon: Icons.add_comment_outlined,
-                  label: _noteController.text.trim().isEmpty
-                      ? 'Catatan'
-                      : 'Catatan ✓',
-                  onTap: () => setState(
-                      () => _isNoteEditorVisible = !_isNoteEditorVisible),
+                const SizedBox(width: 8),
+                // Pill catatan — expandable jadi TextField
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _isNoteExpanded = !_isNoteExpanded);
+                      if (!_isNoteExpanded) {
+                        FocusScope.of(context).unfocus();
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: hasNote
+                            ? AppTheme.income.withValues(alpha: 0.08)
+                            : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                        border: hasNote
+                            ? Border.all(
+                                color: AppTheme.income.withValues(alpha: 0.25))
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            hasNote
+                                ? Icons.sticky_note_2_rounded
+                                : Icons.add_comment_outlined,
+                            size: 13,
+                            color: hasNote
+                                ? AppTheme.income
+                                : Colors.grey.shade500,
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              hasNote
+                                  ? _noteController.text.trim()
+                                  : 'Tambah catatan',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight:
+                                    hasNote ? FontWeight.w500 : FontWeight.w400,
+                                color: hasNote
+                                    ? AppTheme.textPrimary
+                                    : Colors.grey.shade500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+
+          // Note field — muncul di bawah pill saat expanded
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOut,
-            child: _isNoteEditorVisible
+            child: _isNoteExpanded
                 ? Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                    padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
                     child: TextField(
                       controller: _noteController,
-                      maxLines: 2,
+                      maxLines: 5,
+                      minLines: 1,
+                      autofocus: true,
                       textInputAction: TextInputAction.done,
                       decoration: InputDecoration(
-                        hintText: 'Tambahkan catatan...',
-                        prefixIcon: const Icon(Icons.sticky_note_2_outlined),
+                        hintText: 'Tulis catatan...',
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                            horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: Colors.grey.shade300)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                BorderSide(color: Colors.grey.shade300)),
                       ),
-                      onChanged: (v) => setState(() => _note = v),
+                      onChanged: (v) => setState(() {}),
                       onSubmitted: (_) =>
-                          setState(() => _isNoteEditorVisible = false),
+                          setState(() => _isNoteExpanded = false),
                     ),
                   )
                 : const SizedBox.shrink(),
           ),
-          const Spacer(),
+
+          // Jarak ke numpad — fixed, tidak pakai Spacer
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: AppTheme.divider),
 
           // ── NUMPAD ──
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _numRow([
-                  _buildNumberButton('7', () => _onNumberPressed('7')),
-                  _buildNumberButton('8', () => _onNumberPressed('8')),
-                  _buildNumberButton('9', () => _onNumberPressed('9')),
-                  _buildOperatorButton('÷', () => _onOperatorPressed('÷')),
+                  _numBtn('7', () => _onNumberPressed('7')),
+                  _numBtn('8', () => _onNumberPressed('8')),
+                  _numBtn('9', () => _onNumberPressed('9')),
+                  _opBtn('÷', () => _onOperatorPressed('÷')),
                 ]),
                 const SizedBox(height: 8),
                 _numRow([
-                  _buildNumberButton('4', () => _onNumberPressed('4')),
-                  _buildNumberButton('5', () => _onNumberPressed('5')),
-                  _buildNumberButton('6', () => _onNumberPressed('6')),
-                  _buildOperatorButton('×', () => _onOperatorPressed('×')),
+                  _numBtn('4', () => _onNumberPressed('4')),
+                  _numBtn('5', () => _onNumberPressed('5')),
+                  _numBtn('6', () => _onNumberPressed('6')),
+                  _opBtn('×', () => _onOperatorPressed('×')),
                 ]),
                 const SizedBox(height: 8),
                 _numRow([
-                  _buildNumberButton('1', () => _onNumberPressed('1')),
-                  _buildNumberButton('2', () => _onNumberPressed('2')),
-                  _buildNumberButton('3', () => _onNumberPressed('3')),
-                  _buildOperatorButton('-', () => _onOperatorPressed('-')),
+                  _numBtn('1', () => _onNumberPressed('1')),
+                  _numBtn('2', () => _onNumberPressed('2')),
+                  _numBtn('3', () => _onNumberPressed('3')),
+                  _opBtn('-', () => _onOperatorPressed('-')),
                 ]),
                 const SizedBox(height: 8),
                 _numRow([
-                  _buildOperatorButton('C', _onClear),
-                  _buildNumberButton('0', () => _onNumberPressed('0')),
-                  _buildNumberButton('00', _onDoubleZeroPressed),
-                  _buildOperatorButton('+', () => _onOperatorPressed('+')),
+                  _opBtn('C', _onClear),
+                  _numBtn('0', () => _onNumberPressed('0')),
+                  _numBtn('00', _onDoubleZeroPressed),
+                  _opBtn('+', () => _onOperatorPressed('+')),
                 ]),
                 const SizedBox(height: 8),
+                // Baris bawah: ⌫ | = | Simpan
                 Row(
                   children: [
                     Expanded(
-                      flex: 1,
-                      child: _buildIconButton(
-                          Icons.backspace_outlined, _onBackspace),
-                    ),
+                        flex: 1,
+                        child:
+                            _iconBtn(Icons.backspace_outlined, _onBackspace)),
                     const SizedBox(width: 8),
                     if (hasOperation) ...[
                       Expanded(
                         flex: 1,
-                        child: _buildActionKeyButton(
-                          label: '=',
-                          color: Colors.orange.shade600,
-                          onTap: _onEqualsPressed,
-                        ),
+                        child: _actionBtn(
+                            label: '=',
+                            color: Colors.orange.shade600,
+                            onTap: _onEqualsPressed),
                       ),
                       const SizedBox(width: 8),
                     ],
-                    Expanded(
-                      flex: 2,
-                      child: _buildSaveButton(typeColor),
-                    ),
+                    Expanded(flex: 2, child: _saveBtn(typeColor)),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -646,131 +723,78 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     return Row(children: spaced);
   }
 
-  Widget _buildTypeTab({
-    required String label,
-    required TransactionType type,
-    required Color activeColor,
-  }) {
-    final isSelected = _selectedType == type;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _onTypeChanged(type),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: isSelected ? activeColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: activeColor.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : [],
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.grey.shade500,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNumberButton(String label, VoidCallback onTap) {
+  Widget _numBtn(String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 56,
+        height: 52,
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200)),
         child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: label == '00' ? 20 : 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
-            ),
-          ),
+          child: Text(label,
+              style: TextStyle(
+                  fontSize: label == '00' ? 18 : 22,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800)),
         ),
       ),
     );
   }
 
-  Widget _buildOperatorButton(String label, VoidCallback onTap) {
+  Widget _opBtn(String label, VoidCallback onTap) {
     final isActive = _operation == label && _previousValue != null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 56,
+        height: 52,
         decoration: BoxDecoration(
           color: isActive ? Colors.orange.shade200 : Colors.orange.shade50,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? Colors.orange.shade400 : Colors.orange.shade200,
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: Colors.orange.shade700,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIconButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Center(
-          child: Icon(icon, color: Colors.grey.shade700, size: 24),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionKeyButton({
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 56,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
+              color:
+                  isActive ? Colors.orange.shade400 : Colors.orange.shade200),
         ),
         child: Center(
           child: Text(label,
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.orange.shade700)),
+        ),
+      ),
+    );
+  }
+
+  Widget _iconBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200)),
+        child: Center(child: Icon(icon, color: Colors.grey.shade700, size: 22)),
+      ),
+    );
+  }
+
+  Widget _actionBtn(
+      {required String label,
+      required Color color,
+      required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+            color: color, borderRadius: BorderRadius.circular(12)),
+        child: Center(
+          child: Text(label,
               style: const TextStyle(
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: Colors.white)),
         ),
@@ -778,20 +802,18 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     );
   }
 
-  Widget _buildSaveButton(Color color) {
+  Widget _saveBtn(Color color) {
     return GestureDetector(
       onTap: _onSave,
       child: Container(
-        height: 56,
+        height: 52,
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-        ),
+            color: color, borderRadius: BorderRadius.circular(12)),
         child: Center(
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_rounded, color: Colors.white, size: 22),
+              const Icon(Icons.check_rounded, color: Colors.white, size: 20),
               const SizedBox(width: 6),
               Text(
                 _isEditing ? 'Perbarui' : 'Simpan',
@@ -807,28 +829,37 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     );
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Colors.blue.shade700, size: 24),
+  Widget _buildTypeTab(
+      {required String label,
+      required TransactionType type,
+      required Color activeColor}) {
+    final isSelected = _selectedType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onTypeChanged(type),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                        color: activeColor.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
+                  ]
+                : [],
           ),
-          const SizedBox(height: 4),
-          Text(label,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-        ],
+          child: Center(
+            child: Text(label,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : Colors.grey.shade500)),
+          ),
+        ),
       ),
     );
   }
@@ -854,12 +885,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           children: [
             const SizedBox(height: 12),
             Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: AppTheme.divider,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppTheme.divider,
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
             Text(
               _selectedType == TransactionType.expense
@@ -881,41 +911,36 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   childAspectRatio: 1,
                 ),
                 itemCount: categories.length,
-                itemBuilder: (ctx, index) {
-                  final category = categories[index];
-                  final isSelected = _selectedCategory?.id == category.id;
+                itemBuilder: (ctx, i) {
+                  final cat = categories[i];
+                  final isSel = _selectedCategory?.id == cat.id;
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedCategory = category);
+                      setState(() => _selectedCategory = cat);
                       Navigator.pop(ctx);
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(category.color).withValues(alpha: 0.15),
+                        color: Color(cat.color).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected
-                              ? Color(category.color)
-                              : Colors.transparent,
-                          width: 2,
-                        ),
+                            color:
+                                isSel ? Color(cat.color) : Colors.transparent,
+                            width: 2),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(category.icon,
-                              style: const TextStyle(fontSize: 32)),
+                          Text(cat.icon, style: const TextStyle(fontSize: 32)),
                           const SizedBox(height: 8),
-                          Text(
-                            category.name,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          Text(cat.name,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
@@ -931,7 +956,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   void _showAccountPicker() {
     final provider = context.read<FinanceProvider>();
-    final accounts = [...provider.regularAccounts, ...provider.savingsAccounts];
+    final accounts = provider.accounts;
 
     showModalBottomSheet(
       context: context,
@@ -946,12 +971,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           children: [
             const SizedBox(height: 12),
             Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: AppTheme.divider,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppTheme.divider,
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
             const Text('Pilih Akun',
                 style: TextStyle(
@@ -963,28 +987,25 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: accounts.length,
-                itemBuilder: (ctx, index) {
-                  final account = accounts[index];
-                  final isSelected = _selectedAccount?.id == account.id;
+                itemBuilder: (ctx, i) {
+                  final acc = accounts[i];
+                  final isSel = _selectedAccount?.id == acc.id;
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedAccount = account);
+                      setState(() => _selectedAccount = acc);
                       Navigator.pop(ctx);
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? Color(account.color).withValues(alpha: 0.1)
+                        color: isSel
+                            ? Color(acc.color).withValues(alpha: 0.1)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected
-                              ? Color(account.color)
-                              : AppTheme.divider,
-                          width: isSelected ? 2 : 1,
-                        ),
+                            color: isSel ? Color(acc.color) : AppTheme.divider,
+                            width: isSel ? 2 : 1),
                       ),
                       child: Row(
                         children: [
@@ -992,14 +1013,11 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color:
-                                  Color(account.color).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                color: Color(acc.color).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12)),
                             child: Center(
-                              child: Text(account.icon,
-                                  style: const TextStyle(fontSize: 24)),
-                            ),
+                                child: Text(acc.icon,
+                                    style: const TextStyle(fontSize: 24))),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -1007,20 +1025,20 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Row(children: [
-                                  Text(account.name,
+                                  Text(acc.name,
                                       style: const TextStyle(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                           color: AppTheme.textPrimary)),
-                                  if (account.isPrimary) ...[
+                                  if (acc.isPrimary) ...[
                                     const SizedBox(width: 6),
                                     const Icon(Icons.star,
                                         size: 14, color: Colors.amber),
                                   ],
                                 ]),
-                                if (isSelected)
+                                if (isSel)
                                   Icon(Icons.check_circle,
-                                      color: Color(account.color), size: 20),
+                                      color: Color(acc.color), size: 20),
                               ],
                             ),
                           ),
@@ -1040,7 +1058,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    // FIX: "Kemarin" pakai jam sekarang, bukan midnight
+    final yesterday =
+        DateTime(now.year, now.month, now.day - 1, now.hour, now.minute);
 
     showModalBottomSheet(
       context: context,
@@ -1055,18 +1075,24 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           children: [
             const SizedBox(height: 12),
             Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
             const Text('Pilih Tanggal',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary)),
+            const SizedBox(height: 8),
+            // Tampilkan tanggal yang sedang dipilih
+            Text(
+              DateFormat('EEEE, d MMMM yyyy • HH:mm', 'id_ID')
+                  .format(_selectedDate),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            ),
             const SizedBox(height: 16),
             ListTile(
               leading: Icon(Icons.today, color: Colors.blue.shade700),
@@ -1075,7 +1101,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               subtitle: Text(DateFormat('d MMMM yyyy', 'id_ID').format(now),
                   style: const TextStyle(fontSize: 12)),
               onTap: () {
-                setState(() => _selectedDate = now);
+                // Hari ini pakai jam sekarang
+                setState(() => _selectedDate = DateTime.now());
                 Navigator.pop(ctx);
               },
             ),
@@ -1093,7 +1120,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             ),
             ListTile(
               leading: Icon(Icons.calendar_month, color: Colors.blue.shade700),
-              title: const Text('Pilih hari',
+              title: const Text('Pilih tanggal lain',
                   style: TextStyle(fontWeight: FontWeight.w500)),
               subtitle:
                   const Text('Buka kalender', style: TextStyle(fontSize: 12)),
@@ -1106,13 +1133,37 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   lastDate: DateTime.now().add(const Duration(days: 365)),
                   builder: (context, child) => Theme(
                     data: Theme.of(context).copyWith(
-                      colorScheme:
-                          const ColorScheme.light(primary: AppTheme.accent),
-                    ),
+                        colorScheme:
+                            const ColorScheme.light(primary: AppTheme.accent)),
                     child: child!,
                   ),
                 );
-                if (picked != null) setState(() => _selectedDate = picked);
+                if (picked != null && mounted) {
+                  // FIX: gabungkan tanggal yang dipilih dengan jam sekarang
+                  final now2 = DateTime.now();
+                  setState(() => _selectedDate = DateTime(
+                        picked.year,
+                        picked.month,
+                        picked.day,
+                        now2.hour,
+                        now2.minute,
+                      ));
+                  // Tawarkan untuk ubah jam juga
+                  _pickTime();
+                }
+              },
+            ),
+            // FIX: opsi ubah jam
+            ListTile(
+              leading:
+                  Icon(Icons.access_time_rounded, color: Colors.blue.shade700),
+              title: const Text('Ubah waktu',
+                  style: TextStyle(fontWeight: FontWeight.w500)),
+              subtitle: Text(DateFormat('HH:mm').format(_selectedDate),
+                  style: const TextStyle(fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickTime();
               },
             ),
             const SizedBox(height: 16),
@@ -1120,5 +1171,29 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime:
+          TimeOfDay(hour: _selectedDate.hour, minute: _selectedDate.minute),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(primary: AppTheme.accent)),
+        child: child!,
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedDate = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          picked.hour,
+          picked.minute,
+        );
+      });
+    }
   }
 }

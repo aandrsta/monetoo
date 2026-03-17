@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
-import '../models/account_model.dart';
 import '../providers/finance_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/app_toast.dart';
@@ -31,6 +30,9 @@ class TransactionTile extends StatelessWidget {
         ? accounts.where((a) => a.id == transaction.accountId).firstOrNull
         : null;
 
+    final hasNote =
+        transaction.note != null && transaction.note!.trim().isNotEmpty;
+
     return Dismissible(
       key: Key(transaction.id),
       direction: DismissDirection.endToStart,
@@ -43,9 +45,7 @@ class TransactionTile extends StatelessWidget {
         ),
         child: const Icon(Icons.delete_rounded, color: Colors.white),
       ),
-      confirmDismiss: (_) async {
-        return await _showDeleteConfirm(context);
-      },
+      confirmDismiss: (_) async => await _showDeleteConfirm(context),
       onDismissed: (_) {
         onDelete();
         AppToast.success(context, 'Transaksi berhasil dihapus');
@@ -61,7 +61,7 @@ class TransactionTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // ── IKON KATEGORI ──
+              // Ikon kategori
               Container(
                 width: 44,
                 height: 44,
@@ -71,20 +71,18 @@ class TransactionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(
-                    transaction.categoryIcon,
-                    style: const TextStyle(fontSize: 20),
-                  ),
+                  child: Text(transaction.categoryIcon,
+                      style: const TextStyle(fontSize: 20)),
                 ),
               ),
               const SizedBox(width: 12),
 
-              // ── TEKS TENGAH ──
+              // Teks tengah
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Judul / nama kategori
+                    // Judul
                     Text(
                       transaction.categoryName,
                       style: const TextStyle(
@@ -94,77 +92,63 @@ class TransactionTile extends StatelessWidget {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 3),
-                    // Baris kedua: catatan ATAU nama akun + kategori pill
-                    Row(
-                      children: [
-                        // Nama akun (icon + nama kecil)
-                        if (account != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color:
-                                  Color(account.color).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(account.icon,
-                                    style: const TextStyle(fontSize: 10)),
-                                const SizedBox(width: 3),
-                                Text(
-                                  account.name,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(account.color),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        // Catatan atau kategori pill
-                        Flexible(
-                          child: transaction.note != null &&
-                                  transaction.note!.isNotEmpty
-                              ? Text(
-                                  transaction.note!,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                )
-                              : Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Color(transaction.categoryColor)
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    transaction.categoryName,
+
+                    // Baris kedua: akun pill + catatan (kalau ada)
+                    // Kalau tidak ada keduanya → tidak tampil apapun
+                    if (account != null || hasNote) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          // Pill akun
+                          if (account != null) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Color(account.color)
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(account.icon,
+                                      style: const TextStyle(fontSize: 10)),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    account.name,
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: Color(transaction.categoryColor),
                                       fontWeight: FontWeight.w500,
+                                      color: Color(account.color),
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                            if (hasNote) const SizedBox(width: 6),
+                          ],
+                          // Catatan — hanya kalau ada
+                          if (hasNote)
+                            Flexible(
+                              child: Text(
+                                transaction.note!,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppTheme.textSecondary,
                                 ),
-                        ),
-                      ],
-                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
 
-              // ── NOMINAL + WAKTU ──
+              // Nominal + waktu
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -218,9 +202,8 @@ class TransactionTile extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppTheme.expense.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
+                  color: AppTheme.expense.withValues(alpha: 0.1),
+                  shape: BoxShape.circle),
               child: const Icon(Icons.delete_outline_rounded,
                   color: AppTheme.expense, size: 28),
             ),
@@ -231,10 +214,10 @@ class TransactionTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textPrimary)),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Transaksi ini akan dihapus permanen\ndan tidak bisa dikembalikan.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
             ),
             const SizedBox(height: 24),
@@ -249,12 +232,11 @@ class TransactionTile extends StatelessWidget {
                           color: AppTheme.bgLight,
                           borderRadius: BorderRadius.circular(12)),
                       child: const Center(
-                        child: Text('Batal',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary)),
-                      ),
+                          child: Text('Batal',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary))),
                     ),
                   ),
                 ),
@@ -268,12 +250,11 @@ class TransactionTile extends StatelessWidget {
                           color: AppTheme.expense,
                           borderRadius: BorderRadius.circular(12)),
                       child: const Center(
-                        child: Text('Hapus',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white)),
-                      ),
+                          child: Text('Hapus',
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white))),
                     ),
                   ),
                 ),

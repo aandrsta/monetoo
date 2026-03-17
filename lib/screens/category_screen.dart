@@ -251,7 +251,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Pendapatan',
+                                      'Pemasukan',
                                       style: TextStyle(
                                           fontSize: 12,
                                           color: _selectedType ==
