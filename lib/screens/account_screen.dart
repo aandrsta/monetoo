@@ -932,14 +932,14 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                 // ── LIST ──
                 Expanded(
                   child: filtered.isEmpty
-                      ? Center(
+                      ? const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.receipt_long_rounded,
+                              Icon(Icons.receipt_long_rounded,
                                   size: 56, color: AppTheme.divider),
-                              const SizedBox(height: 12),
-                              const Text(
+                              SizedBox(height: 12),
+                              Text(
                                 'Belum ada transaksi\ndi akun ini',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(

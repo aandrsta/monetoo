@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'app_theme.dart';
+import 'app_toast.dart';
 
 class UpdateChecker {
   static const _repoOwner = 'aandrsta';
@@ -15,11 +16,17 @@ class UpdateChecker {
   static const _apiUrl =
       'https://api.github.com/repos/$_repoOwner/$_repoName/releases/latest';
 
+  // Dipanggil otomatis saat app buka — silent, tidak ada feedback kalau up to date
   static Future<void> check(BuildContext context) async {
     try {
       final dio = Dio();
-      final response =
-          await dio.get(_apiUrl).timeout(const Duration(seconds: 5));
+      final response = await dio
+          .get(
+            _apiUrl,
+            options:
+                Options(headers: {'Accept': 'application/vnd.github+json'}),
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) return;
 
       final data = response.data as Map<String, dynamic>;
@@ -39,6 +46,50 @@ class UpdateChecker {
         }
       }
     } catch (_) {}
+  }
+
+  // Dipanggil manual dari halaman Settings — kasih feedback ke user
+  static Future<void> checkManual(BuildContext context) async {
+    try {
+      final dio = Dio();
+      final response = await dio
+          .get(
+            _apiUrl,
+            options:
+                Options(headers: {'Accept': 'application/vnd.github+json'}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode != 200) {
+        if (context.mounted) {
+          AppToast.error(context, 'Gagal menghubungi server');
+        }
+        return;
+      }
+
+      final data = response.data as Map<String, dynamic>;
+      final latestTag = (data['tag_name'] as String).replaceAll('v', '');
+      final downloadUrl = (data['assets'] as List).firstWhere(
+        (a) => (a['name'] as String).endsWith('.apk'),
+        orElse: () => null,
+      )?['browser_download_url'] as String?;
+
+      final info = await PackageInfo.fromPlatform();
+
+      if (!context.mounted) return;
+
+      if (downloadUrl != null && _isNewer(latestTag, info.version)) {
+        _showUpdateDialog(
+            context, latestTag, downloadUrl, data['body'] as String? ?? '');
+      } else {
+        AppToast.success(
+            context, 'Aplikasi sudah versi terbaru (v${info.version})');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        AppToast.error(context, 'Tidak dapat memeriksa pembaruan');
+      }
+    }
   }
 
   static bool _isNewer(String latest, String current) {

@@ -434,7 +434,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             ),
           ),
 
-          // ── CATATAN + TANGGAL (pill row) ──
+          // ── TANGGAL + CATATAN (pill row) ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Row(
@@ -470,44 +470,53 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Field catatan
+                // Pill catatan — buka dialog
                 Expanded(
-                  child: TextField(
-                    controller: _noteController,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppTheme.textPrimary),
-                    maxLines: 1,
-                    textInputAction: TextInputAction.done,
-                    onChanged: (_) => setState(() {}),
-                    decoration: InputDecoration(
-                      hintText: 'Tambah catatan...',
-                      hintStyle: const TextStyle(
-                          fontSize: 13, color: AppTheme.textSecondary),
-                      prefixIcon: Icon(
-                        _noteController.text.trim().isNotEmpty
-                            ? Icons.sticky_note_2_rounded
-                            : Icons.edit_note_rounded,
-                        size: 15,
-                        color: AppTheme.textSecondary,
+                  child: GestureDetector(
+                    onTap: _showNoteDialog,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _noteController.text.trim().isNotEmpty
+                            ? AppTheme.income.withValues(alpha: 0.08)
+                            : AppTheme.bgLight,
+                        borderRadius: BorderRadius.circular(10),
+                        border: _noteController.text.trim().isNotEmpty
+                            ? Border.all(
+                                color: AppTheme.income.withValues(alpha: 0.25))
+                            : null,
                       ),
-                      prefixIconConstraints:
-                          const BoxConstraints(minWidth: 34, maxWidth: 34),
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppTheme.bgLight,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 10),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                              color: typeColor.withValues(alpha: 0.5),
-                              width: 1.5)),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _noteController.text.trim().isNotEmpty
+                                ? Icons.sticky_note_2_rounded
+                                : Icons.edit_note_rounded,
+                            size: 14,
+                            color: _noteController.text.trim().isNotEmpty
+                                ? AppTheme.income
+                                : AppTheme.textSecondary,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              _noteController.text.trim().isNotEmpty
+                                  ? _noteController.text.trim()
+                                  : 'Tambah catatan...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: _noteController.text.trim().isNotEmpty
+                                    ? AppTheme.textPrimary
+                                    : AppTheme.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -515,7 +524,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             ),
           ),
 
-          const SizedBox(height: 60),
+          const SizedBox(height: 10),
           const Divider(height: 1, color: AppTheme.divider),
 
           // ── NUMPAD ──
@@ -811,6 +820,125 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   // ── PICKERS ──
+
+  Future<void> _showNoteDialog() async {
+    final tempCtrl = TextEditingController(text: _noteController.text);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Text('Catatan',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textPrimary)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: tempCtrl,
+                autofocus: true,
+                maxLines: 3,
+                minLines: 1,
+                textInputAction: TextInputAction.done,
+                style:
+                    const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                decoration: InputDecoration(
+                  hintText: 'Tulis catatan...',
+                  hintStyle: const TextStyle(
+                      fontSize: 14, color: AppTheme.textSecondary),
+                  filled: true,
+                  fillColor: AppTheme.bgLight,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: AppTheme.accent, width: 1.5)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+                onSubmitted: (_) => Navigator.pop(ctx),
+              ),
+              const SizedBox(height: 16),
+              Row(children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      tempCtrl.clear();
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                          color: AppTheme.bgLight,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Center(
+                        child: Text('Hapus catatan',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textSecondary)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      height: 46,
+                      decoration: BoxDecoration(
+                          color: AppTheme.accent,
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Center(
+                        child: Text('Simpan',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (mounted) {
+      setState(() => _noteController.text = tempCtrl.text.trim());
+    }
+    tempCtrl.dispose();
+  }
 
   void _showCategoryPicker() {
     final provider = context.read<FinanceProvider>();

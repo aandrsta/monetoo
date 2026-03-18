@@ -8,6 +8,7 @@ import 'transaction_screen.dart';
 import 'category_screen.dart';
 import 'statistics_screen.dart';
 import 'account_screen.dart';
+import 'settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -25,6 +26,7 @@ class _MainNavigationState extends State<MainNavigation> {
     TransactionScreen(),
     CategoryScreen(),
     StatisticsScreen(),
+    SettingsScreen(),
   ];
 
   @override
@@ -32,8 +34,6 @@ class _MainNavigationState extends State<MainNavigation> {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
 
-    // Cek update setelah frame pertama render
-    // Data SQLite tidak akan hilang karena update APK tidak uninstall app
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         UpdateChecker.check(context);
@@ -76,7 +76,7 @@ class _MainNavigationState extends State<MainNavigation> {
               gap: 8,
               activeColor: AppTheme.accent,
               iconSize: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               duration: const Duration(milliseconds: 400),
               tabBackgroundColor: AppTheme.accent.withValues(alpha: 0.1),
               color: AppTheme.textSecondary,
@@ -96,6 +96,10 @@ class _MainNavigationState extends State<MainNavigation> {
                 GButton(
                   icon: Icons.bar_chart_rounded,
                   text: 'Statistik',
+                ),
+                GButton(
+                  icon: Icons.settings_rounded,
+                  text: 'Pengaturan',
                 ),
               ],
               selectedIndex: _currentIndex,
