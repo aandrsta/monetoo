@@ -125,7 +125,9 @@ class FinanceProvider extends ChangeNotifier {
 
   Future<void> updateCategory(CategoryModel category) async {
     await _db.updateCategory(category);
+    await _db.updateTransactionsByCategory(category); // ← tambah ini
     await loadCategories();
+    await loadTransactions(); // ← tambah ini
   }
 
   Future<void> deleteCategory(String id) async {

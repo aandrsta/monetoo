@@ -220,6 +220,20 @@ class DatabaseHelper {
     return await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<int> updateTransactionsByCategory(CategoryModel category) async {
+    final db = await database;
+    return await db.update(
+      'transactions',
+      {
+        'categoryName': category.name,
+        'categoryIcon': category.icon,
+        'categoryColor': category.color,
+      },
+      where: 'categoryId = ?',
+      whereArgs: [category.id],
+    );
+  }
+
   // ===== SUMMARY OPERATIONS =====
 
   Future<Map<String, double>> getDailySummary(DateTime date) async {
