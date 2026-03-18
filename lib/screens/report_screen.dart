@@ -127,8 +127,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
   Widget _buildSummarySection(double income, double expense) {
     final balance = income - expense;
-    final savingRate = income > 0 ? ((income - expense) / income * 100) : 0.0;
-
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(

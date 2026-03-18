@@ -28,37 +28,31 @@ class AddTransactionBottomSheet extends StatefulWidget {
 
 class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   String _amount = '0';
-  String _displayAmount = '0';
   double? _previousValue;
   String? _operation;
   bool _shouldResetAmount = false;
-  bool _isNoteExpanded = false;
+
   CategoryModel? _selectedCategory;
   AccountModel? _selectedAccount;
   DateTime _selectedDate = DateTime.now();
   late final TextEditingController _noteController;
-  late final FocusNode _noteFocusNode;
 
   TransactionType _selectedType = TransactionType.expense;
 
   bool get _isEditing => widget.transaction != null;
 
-  bool get _isDateModified {
-    final now = DateTime.now();
-    return !(_selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day);
-  }
+  // Warna latar akun & kategori — light theme
+  static const Color _accountBg = Color(0xFFEEF2FF);
+  static const Color _categoryBg = Color(0xFFF3EEFF);
 
   @override
   void initState() {
     super.initState();
-    _noteFocusNode = FocusNode();
     _noteController = TextEditingController();
+
     if (_isEditing) {
       final t = widget.transaction!;
       _amount = t.amount.toStringAsFixed(0);
-      _displayAmount = _amount;
       _selectedDate = t.date;
       _noteController.text = t.note ?? '';
       _selectedType = t.type;
@@ -81,18 +75,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               _selectedAccount =
                   accounts.firstWhere((a) => a.id == t.accountId);
             } catch (_) {
-              try {
-                _selectedAccount = accounts.firstWhere((a) => a.isPrimary);
-              } catch (_) {
-                _selectedAccount = accounts.first;
-              }
+              _selectedAccount = accounts.firstWhere((a) => a.isPrimary,
+                  orElse: () => accounts.first);
             }
           } else {
-            try {
-              _selectedAccount = accounts.firstWhere((a) => a.isPrimary);
-            } catch (_) {
-              _selectedAccount = accounts.first;
-            }
+            _selectedAccount = accounts.firstWhere((a) => a.isPrimary,
+                orElse: () => accounts.first);
           }
         });
       });
@@ -105,14 +93,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         final provider = context.read<FinanceProvider>();
         final accounts = provider.accounts;
         setState(() {
-          if (accounts.isEmpty) {
-            _selectedAccount = null;
-          } else {
-            try {
-              _selectedAccount = accounts.firstWhere((a) => a.isPrimary);
-            } catch (_) {
-              _selectedAccount = accounts.first;
-            }
+          if (accounts.isNotEmpty) {
+            _selectedAccount = accounts.firstWhere((a) => a.isPrimary,
+                orElse: () => accounts.first);
           }
         });
       });
@@ -122,47 +105,25 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   @override
   void dispose() {
     _noteController.dispose();
-    _noteFocusNode.dispose();
     super.dispose();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Saat keyboard dismiss (viewInsets.bottom turun ke 0), collapse note field
-    final inset = MediaQuery.of(context).viewInsets.bottom;
-    if (inset == 0 && _isNoteExpanded) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) setState(() => _isNoteExpanded = false);
-      });
-    }
-  }
+  // ── KALKULASI ──
 
-  void _onTypeChanged(TransactionType type) {
-    if (_selectedType == type) return;
-    setState(() {
-      _selectedType = type;
-      if (_selectedCategory != null && _selectedCategory!.type != type) {
-        _selectedCategory = null;
-      }
-    });
-  }
-
-  void _onNumberPressed(String number) {
+  void _onNumber(String n) {
     setState(() {
       if (_shouldResetAmount) {
-        _amount = number;
+        _amount = n;
         _shouldResetAmount = false;
       } else if (_amount == '0') {
-        _amount = number;
+        _amount = n;
       } else if (_amount.length < 15) {
-        _amount += number;
+        _amount += n;
       }
-      _updateDisplay();
     });
   }
 
-  void _onDoubleZeroPressed() {
+  void _onDoubleZero() {
     setState(() {
       if (_shouldResetAmount) {
         _amount = '0';
@@ -170,76 +131,51 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       } else if (_amount != '0' && _amount.length < 14) {
         _amount += '00';
       }
-      _updateDisplay();
     });
   }
 
-  void _onOperatorPressed(String op) {
+  void _onOperator(String op) {
     setState(() {
       if (_previousValue != null && _operation != null && !_shouldResetAmount) {
-        _calculateInternal();
+        _calcInternal();
       }
-      _previousValue = double.tryParse(_amount.isEmpty ? '0' : _amount) ?? 0;
+      _previousValue = double.tryParse(_amount) ?? 0;
       _operation = op;
       _shouldResetAmount = true;
-      _updateDisplay();
     });
   }
 
-  void _calculateInternal() {
+  void _calcInternal() {
     if (_previousValue == null || _operation == null) return;
-    final current = double.tryParse(_amount.isEmpty ? '0' : _amount) ?? 0;
-    double result = _previousValue!;
+    final cur = double.tryParse(_amount) ?? 0;
+    double res = _previousValue!;
     switch (_operation) {
       case '+':
-        result = _previousValue! + current;
+        res = _previousValue! + cur;
         break;
-      case '-':
-        result = _previousValue! - current;
+      case '−':
+        res = _previousValue! - cur;
         break;
       case '×':
-        result = _previousValue! * current;
+        res = _previousValue! * cur;
         break;
       case '÷':
-        if (current != 0) result = _previousValue! / current;
+        if (cur != 0) res = _previousValue! / cur;
         break;
     }
-    if (result == result.truncateToDouble()) {
-      _amount = result.toInt().toString();
+    if (res == res.truncateToDouble()) {
+      _amount = res.toInt().toString();
     } else {
-      _amount = result.toString().replaceAll(RegExp(r'\.?0+$'), '');
+      _amount = res.toStringAsFixed(0);
     }
     _previousValue = null;
     _operation = null;
     _shouldResetAmount = false;
   }
 
-  void _onEqualsPressed() {
+  void _onEquals() {
     if (_previousValue == null || _operation == null) return;
-    setState(() {
-      _calculateInternal();
-      _updateDisplay();
-    });
-  }
-
-  void _updateDisplay() {
-    if (_previousValue != null && _operation != null) {
-      final firstNum = _fmt(_previousValue!);
-      final secondNum =
-          _shouldResetAmount ? '0' : _fmt(double.tryParse(_amount) ?? 0);
-      _displayAmount = '$firstNum $_operation $secondNum';
-    } else {
-      _displayAmount = _amount;
-    }
-  }
-
-  String _fmt(double n) {
-    if (n == n.truncateToDouble()) {
-      return NumberFormat('#,###', 'id_ID')
-          .format(n.toInt())
-          .replaceAll(',', '.');
-    }
-    return NumberFormat('#,##0.##', 'id_ID').format(n).replaceAll(',', '.');
+    setState(_calcInternal);
   }
 
   void _onBackspace() {
@@ -256,7 +192,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       } else {
         _amount = '0';
       }
-      _updateDisplay();
     });
   }
 
@@ -266,9 +201,17 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       _previousValue = null;
       _operation = null;
       _shouldResetAmount = false;
-      _updateDisplay();
     });
   }
+
+  String _formatted() {
+    final n = double.tryParse(_amount) ?? 0;
+    return NumberFormat('#,###', 'id_ID')
+        .format(n.toInt())
+        .replaceAll(',', '.');
+  }
+
+  // ── SIMPAN ──
 
   void _onSave() async {
     if (_selectedCategory == null) {
@@ -276,12 +219,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       return;
     }
     if (_previousValue != null && _operation != null) {
-      setState(() {
-        _calculateInternal();
-        _updateDisplay();
-      });
+      setState(_calcInternal);
     }
-    final amount = double.tryParse(_amount.isEmpty ? '0' : _amount) ?? 0;
+    final amount = double.tryParse(_amount) ?? 0;
     if (amount <= 0) {
       AppToast.error(context, 'Masukkan nominal transaksi');
       return;
@@ -289,14 +229,13 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
     final provider = context.read<FinanceProvider>();
     final note = _noteController.text.trim();
-    final transactionType = _selectedCategory!.type;
 
     if (_isEditing) {
-      final transaction = TransactionModel(
+      await provider.updateTransaction(TransactionModel(
         id: widget.transaction!.id,
         title: note.isEmpty ? _selectedCategory!.name : note,
         amount: amount,
-        type: transactionType,
+        type: _selectedCategory!.type,
         categoryId: _selectedCategory!.id,
         categoryName: _selectedCategory!.name,
         categoryIcon: _selectedCategory!.icon,
@@ -305,18 +244,17 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         date: _selectedDate,
         note: note.isEmpty ? null : note,
         createdAt: widget.transaction!.createdAt,
-      );
-      await provider.updateTransaction(transaction);
+      ));
       if (mounted) {
         Navigator.pop(context);
         AppToast.success(context, 'Transaksi berhasil diperbarui');
       }
     } else {
-      final transaction = TransactionModel(
+      await provider.addTransaction(TransactionModel(
         id: const Uuid().v4(),
         title: note.isEmpty ? _selectedCategory!.name : note,
         amount: amount,
-        type: transactionType,
+        type: _selectedCategory!.type,
         categoryId: _selectedCategory!.id,
         categoryName: _selectedCategory!.name,
         categoryIcon: _selectedCategory!.icon,
@@ -325,8 +263,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         date: _selectedDate,
         note: note.isEmpty ? null : note,
         createdAt: DateTime.now(),
-      );
-      await provider.addTransaction(transaction);
+      ));
       if (mounted) {
         Navigator.pop(context);
         AppToast.success(context, 'Transaksi berhasil ditambahkan');
@@ -334,286 +271,130 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     }
   }
 
-  String _getFormattedAmount() {
-    if (_previousValue != null && _operation != null) {
-      return _displayAmount;
-    }
-    if (_amount.isEmpty || _amount == '0') return '0';
-    final number = double.tryParse(_amount) ?? 0;
-    if (number == number.truncateToDouble()) {
-      return NumberFormat('#,###', 'id_ID')
-          .format(number.toInt())
-          .replaceAll(',', '.');
-    }
-    return NumberFormat('#,##0.##', 'id_ID')
-        .format(number)
-        .replaceAll(',', '.');
-  }
+  // ── BUILD ──
 
   @override
   Widget build(BuildContext context) {
     final isExpense = _selectedType == TransactionType.expense;
     final typeColor = isExpense ? AppTheme.expense : AppTheme.income;
-    final hasOperation = _previousValue != null && _operation != null;
-    final hasNote = _noteController.text.trim().isNotEmpty;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
-    // Tinggi numpad fixed: 5 baris x 52 + 4 gap x 8 + padding 10+12
-    const double numpadHeight = 5 * 52 + 4 * 8 + 10 + 12;
+    final hasOp = _previousValue != null && _operation != null;
 
     return Container(
-      // Cukup tinggi untuk konten + numpad, naik otomatis saat keyboard muncul
-      height: MediaQuery.of(context).size.height * 0.88 + bottomInset,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2)),
+          Container(
+            width: 36,
+            height: 4,
+            margin: const EdgeInsets.only(top: 10, bottom: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.divider,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
 
-          // Type selector
+          // ── TYPE SELECTOR (hanya saat tambah baru) ──
           if (!_isEditing)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Container(
-                height: 42,
+                height: 44,
                 decoration: BoxDecoration(
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    _buildTypeTab(
-                        label: 'Pengeluaran',
-                        type: TransactionType.expense,
-                        activeColor: AppTheme.expense),
-                    _buildTypeTab(
-                        label: 'Pemasukan',
-                        type: TransactionType.income,
-                        activeColor: AppTheme.income),
+                    _typeTab('Pengeluaran', TransactionType.expense,
+                        AppTheme.expense),
+                    _typeTab(
+                        'Pemasukan', TransactionType.income, AppTheme.income),
                   ],
                 ),
               ),
             ),
 
-          const SizedBox(height: 12),
-
-          // Account & Category row
+          // ── AKUN & KATEGORI ──
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
               children: [
                 Expanded(
                   child: GestureDetector(
                     onTap: _showAccountPicker,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Dari akun',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade500)),
-                        const SizedBox(height: 6),
-                        Row(children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: _selectedAccount != null
-                                  ? Color(_selectedAccount!.color)
-                                      .withValues(alpha: 0.2)
-                                  : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(_selectedAccount?.icon ?? '💳',
-                                style: const TextStyle(fontSize: 18)),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _selectedAccount?.name ?? 'Pilih',
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _accountBg,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Dari akun',
                               style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade800),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                                  fontSize: 11, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 6),
+                          Row(children: [
+                            Text(_selectedAccount?.icon ?? '💳',
+                                style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _selectedAccount?.name ?? 'Pilih',
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                        ]),
-                      ],
+                          ]),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
                     onTap: _showCategoryPicker,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Ke kategori',
-                            style: TextStyle(
-                                fontSize: 11, color: Colors.grey.shade500)),
-                        const SizedBox(height: 6),
-                        Row(children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: _selectedCategory != null
-                                  ? Color(_selectedCategory!.color)
-                                      .withValues(alpha: 0.2)
-                                  : Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(_selectedCategory?.icon ?? '📦',
-                                style: const TextStyle(fontSize: 18)),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _selectedCategory?.name ?? 'Pilih',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade800),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ]),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Amount display
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'Rp ${_getFormattedAmount()}',
-              style: TextStyle(
-                  fontSize: hasOperation ? 28 : 40,
-                  fontWeight: FontWeight.w700,
-                  color: typeColor),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Info bar: tanggal + catatan pill
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: [
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: _isDateModified
-                          ? AppTheme.accent.withValues(alpha: 0.08)
-                          : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                      border: _isDateModified
-                          ? Border.all(
-                              color: AppTheme.accent.withValues(alpha: 0.3))
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.calendar_today_outlined,
-                            size: 13,
-                            color: _isDateModified
-                                ? AppTheme.accent
-                                : Colors.grey.shade500),
-                        const SizedBox(width: 5),
-                        Text(
-                          _isDateModified
-                              ? DateFormat('d MMM • HH:mm', 'id_ID')
-                                  .format(_selectedDate)
-                              : 'Hari ini • ${DateFormat('HH:mm').format(_selectedDate)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: _isDateModified
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                            color: _isDateModified
-                                ? AppTheme.accent
-                                : Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() => _isNoteExpanded = !_isNoteExpanded);
-                      if (!_isNoteExpanded) {
-                        FocusScope.of(context).unfocus();
-                      }
-                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 7),
+                          horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: hasNote
-                            ? AppTheme.income.withValues(alpha: 0.08)
-                            : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(10),
-                        border: hasNote
-                            ? Border.all(
-                                color: AppTheme.income.withValues(alpha: 0.25))
-                            : null,
+                        color: _categoryBg,
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            hasNote
-                                ? Icons.sticky_note_2_rounded
-                                : Icons.add_comment_outlined,
-                            size: 13,
-                            color: hasNote
-                                ? AppTheme.income
-                                : Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              hasNote
-                                  ? _noteController.text.trim()
-                                  : 'Tambah catatan',
+                          const Text('Ke kategori',
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight:
-                                    hasNote ? FontWeight.w500 : FontWeight.w400,
-                                color: hasNote
-                                    ? AppTheme.textPrimary
-                                    : Colors.grey.shade500,
+                                  fontSize: 11, color: AppTheme.textSecondary)),
+                          const SizedBox(height: 6),
+                          Row(children: [
+                            Text(_selectedCategory?.icon ?? '📦',
+                                style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _selectedCategory?.name ?? 'Pilih',
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+                          ]),
                         ],
                       ),
                     ),
@@ -623,244 +404,395 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             ),
           ),
 
-          // Note field — expand di antara pill dan divider
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            child: _isNoteExpanded
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                    child: TextField(
-                      controller: _noteController,
-                      maxLines: 3,
-                      minLines: 1,
-                      autofocus: true,
-                      focusNode: _noteFocusNode,
-                      textInputAction: TextInputAction.done,
-                      style: const TextStyle(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Tulis catatan...',
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade300)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide:
-                                BorderSide(color: Colors.grey.shade300)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(
-                                color: AppTheme.accent, width: 1.5)),
-                      ),
-                      onChanged: (v) => setState(() {}),
-                      onSubmitted: (_) =>
-                          setState(() => _isNoteExpanded = false),
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-
-          _isNoteExpanded ? const SizedBox.shrink() : const Spacer(),
-          const Divider(height: 1, color: AppTheme.divider),
-
-          // Numpad — fixed di bawah, tinggi tetap
-          SizedBox(
-            height: numpadHeight,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _numRow([
-                    _numBtn('7', () => _onNumberPressed('7')),
-                    _numBtn('8', () => _onNumberPressed('8')),
-                    _numBtn('9', () => _onNumberPressed('9')),
-                    _opBtn('÷', () => _onOperatorPressed('÷')),
-                  ]),
-                  _numRow([
-                    _numBtn('4', () => _onNumberPressed('4')),
-                    _numBtn('5', () => _onNumberPressed('5')),
-                    _numBtn('6', () => _onNumberPressed('6')),
-                    _opBtn('×', () => _onOperatorPressed('×')),
-                  ]),
-                  _numRow([
-                    _numBtn('1', () => _onNumberPressed('1')),
-                    _numBtn('2', () => _onNumberPressed('2')),
-                    _numBtn('3', () => _onNumberPressed('3')),
-                    _opBtn('-', () => _onOperatorPressed('-')),
-                  ]),
-                  _numRow([
-                    _opBtn('C', _onClear),
-                    _numBtn('0', () => _onNumberPressed('0')),
-                    _numBtn('00', _onDoubleZeroPressed),
-                    _opBtn('+', () => _onOperatorPressed('+')),
-                  ]),
-                  Row(
-                    children: [
-                      Expanded(
-                          flex: 1,
-                          child:
-                              _iconBtn(Icons.backspace_outlined, _onBackspace)),
-                      const SizedBox(width: 8),
-                      if (hasOperation) ...[
-                        Expanded(
-                          flex: 1,
-                          child: _actionBtn(
-                              label: '=',
-                              color: Colors.orange.shade600,
-                              onTap: _onEqualsPressed),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Expanded(flex: 2, child: _saveBtn(typeColor)),
-                    ],
+          // ── NOMINAL ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text('Rp ',
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w400,
+                        color: typeColor.withValues(alpha: 0.7))),
+                Expanded(
+                  child: Text(
+                    hasOp
+                        ? '${_fmtPrev(_previousValue!)} $_operation ${_shouldResetAmount ? '0' : _formatted()}'
+                        : _formatted(),
+                    style: TextStyle(
+                        fontSize: hasOp ? 26 : 40,
+                        fontWeight: FontWeight.w700,
+                        color: typeColor),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
+
+          // ── CATATAN + TANGGAL (pill row) ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                // Pill tanggal
+                GestureDetector(
+                  onTap: _pickDate,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.bgLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.calendar_today_outlined,
+                            size: 13, color: AppTheme.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          _isToday(_selectedDate)
+                              ? 'Hari ini • ${DateFormat('HH:mm').format(_selectedDate)}'
+                              : DateFormat('d MMM • HH:mm', 'id_ID')
+                                  .format(_selectedDate),
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Field catatan
+                Expanded(
+                  child: TextField(
+                    controller: _noteController,
+                    style: const TextStyle(
+                        fontSize: 13, color: AppTheme.textPrimary),
+                    maxLines: 1,
+                    textInputAction: TextInputAction.done,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: 'Tambah catatan...',
+                      hintStyle: const TextStyle(
+                          fontSize: 13, color: AppTheme.textSecondary),
+                      prefixIcon: Icon(
+                        _noteController.text.trim().isNotEmpty
+                            ? Icons.sticky_note_2_rounded
+                            : Icons.edit_note_rounded,
+                        size: 15,
+                        color: AppTheme.textSecondary,
+                      ),
+                      prefixIconConstraints:
+                          const BoxConstraints(minWidth: 34, maxWidth: 34),
+                      isDense: true,
+                      filled: true,
+                      fillColor: AppTheme.bgLight,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                              color: typeColor.withValues(alpha: 0.5),
+                              width: 1.5)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 60),
+          const Divider(height: 1, color: AppTheme.divider),
+
+          // ── NUMPAD ──
+          _buildNumpad(typeColor, hasOp),
         ],
       ),
     );
   }
 
-  Widget _numRow(List<Widget> children) {
-    final List<Widget> spaced = [];
-    for (int i = 0; i < children.length; i++) {
-      spaced.add(Expanded(child: children[i]));
-      if (i < children.length - 1) spaced.add(const SizedBox(width: 8));
-    }
-    return Row(children: spaced);
+  bool _isToday(DateTime d) {
+    final now = DateTime.now();
+    return d.year == now.year && d.month == now.month && d.day == now.day;
   }
 
-  Widget _numBtn(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200)),
-        child: Center(
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: label == '00' ? 18 : 22,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800)),
+  String _fmtPrev(double n) {
+    return NumberFormat('#,###', 'id_ID')
+        .format(n.toInt())
+        .replaceAll(',', '.');
+  }
+
+  // ── NUMPAD WIDGET ──
+  // Layout kolom: [op(52) | gap | angka(Expanded) | gap | kanan(64)]
+  // Kolom kanan:  [backspace(1 baris)] + [simpan(3 baris)]
+
+  Widget _buildNumpad(Color typeColor, bool hasOp) {
+    const h = 56.0;
+    const gap = 8.0;
+    const double sideW = 64.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── KOLOM KIRI: 4 operator ──
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _opKey('÷', h),
+                const SizedBox(height: gap),
+                _opKey('×', h),
+                const SizedBox(height: gap),
+                _opKey('−', h),
+                const SizedBox(height: gap),
+                _opKey('+', h),
+              ],
+            ),
+            const SizedBox(width: gap),
+
+            // ── KOLOM TENGAH: 4 baris angka ──
+            Expanded(
+              child: Column(
+                children: [
+                  Row(children: [
+                    Expanded(child: _numKeyFull('7', h)),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('8', h)),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('9', h)),
+                  ]),
+                  const SizedBox(height: gap),
+                  Row(children: [
+                    Expanded(child: _numKeyFull('4', h)),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('5', h)),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('6', h)),
+                  ]),
+                  const SizedBox(height: gap),
+                  Row(children: [
+                    Expanded(child: _numKeyFull('1', h)),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('2', h)),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('3', h)),
+                  ]),
+                  const SizedBox(height: gap),
+                  Row(children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _onClear,
+                        child: Container(
+                          height: h,
+                          decoration: BoxDecoration(
+                            color: AppTheme.bgLight,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Center(
+                            child: Text('C',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textSecondary)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: gap),
+                    Expanded(child: _numKeyFull('0', h)),
+                    const SizedBox(width: gap),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _onDoubleZero,
+                        child: Container(
+                          height: h,
+                          decoration: BoxDecoration(
+                            color: AppTheme.bgLight,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Center(
+                            child: Text('00',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+            const SizedBox(width: gap),
+
+            // ── KOLOM KANAN: backspace (baris 1) + simpan (baris 2–4) ──
+            SizedBox(
+              width: sideW,
+              child: Column(
+                children: [
+                  // Backspace — 1 baris
+                  SizedBox(
+                    height: h,
+                    child: GestureDetector(
+                      onTap: _onBackspace,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.bgLight,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.backspace_outlined,
+                              color: AppTheme.textSecondary, size: 20),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: gap),
+                  // Simpan — mengisi sisa 3 baris + 2 gap
+                  Expanded(
+                    child: hasOp
+                        ? Column(children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: _onEquals,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade500,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: const Center(
+                                    child: Text('=',
+                                        style: TextStyle(
+                                            fontSize: 28,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: gap),
+                            Expanded(child: _saveButton(typeColor)),
+                          ])
+                        : _saveButton(typeColor),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _opBtn(String label, VoidCallback onTap) {
-    final isActive = _operation == label && _previousValue != null;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: isActive ? Colors.orange.shade200 : Colors.orange.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color:
-                  isActive ? Colors.orange.shade400 : Colors.orange.shade200),
-        ),
-        child: Center(
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.orange.shade700)),
-        ),
-      ),
-    );
-  }
+  // ── KEY BUILDERS ──
 
-  Widget _iconBtn(IconData icon, VoidCallback onTap) {
+  Widget _numKeyFull(String label, double h) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () => _onNumber(label),
       child: Container(
-        height: 52,
+        height: h,
         decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200)),
-        child: Center(child: Icon(icon, color: Colors.grey.shade700, size: 22)),
-      ),
-    );
-  }
-
-  Widget _actionBtn(
-      {required String label,
-      required Color color,
-      required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-            color: color, borderRadius: BorderRadius.circular(12)),
+          color: AppTheme.bgLight,
+          borderRadius: BorderRadius.circular(14),
+        ),
         child: Center(
           child: Text(label,
               style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white)),
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textPrimary)),
         ),
       ),
     );
   }
 
-  Widget _saveBtn(Color color) {
-    return GestureDetector(
-      onTap: _onSave,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-            color: color, borderRadius: BorderRadius.circular(12)),
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: 6),
-              Text(
-                _isEditing ? 'Perbarui' : 'Simpan',
-                style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white),
-              ),
-            ],
+  Widget _opKey(String op, double h) {
+    final isActive = _operation == op && _previousValue != null;
+    return SizedBox(
+      width: 52,
+      height: h,
+      child: GestureDetector(
+        onTap: () => _onOperator(op),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: isActive
+                ? Colors.orange.shade500
+                : Colors.orange.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Center(
+            child: Text(op,
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w500,
+                    color: isActive ? Colors.white : Colors.orange.shade600)),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTypeTab(
-      {required String label,
-      required TransactionType type,
-      required Color activeColor}) {
-    final isSelected = _selectedType == type;
+  Widget _saveButton(Color color) {
+    return GestureDetector(
+      onTap: _onSave,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Center(
+          child: Icon(
+            _isEditing ? Icons.check_rounded : Icons.check_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _typeTab(String label, TransactionType type, Color color) {
+    final isSel = _selectedType == type;
     return Expanded(
       child: GestureDetector(
-        onTap: () => _onTypeChanged(type),
+        onTap: () {
+          if (_selectedType == type) return;
+          setState(() {
+            _selectedType = type;
+            if (_selectedCategory != null && _selectedCategory!.type != type) {
+              _selectedCategory = null;
+            }
+          });
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.all(3),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? activeColor : Colors.transparent,
+            color: isSel ? color : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
-            boxShadow: isSelected
+            boxShadow: isSel
                 ? [
                     BoxShadow(
-                        color: activeColor.withValues(alpha: 0.3),
+                        color: color.withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2))
                   ]
@@ -871,12 +803,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : Colors.grey.shade500)),
+                    color: isSel ? Colors.white : AppTheme.textSecondary)),
           ),
         ),
       ),
     );
   }
+
+  // ── PICKERS ──
 
   void _showCategoryPicker() {
     final provider = context.read<FinanceProvider>();
@@ -933,7 +867,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Color(cat.color).withValues(alpha: 0.15),
+                        color: Color(cat.color).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                             color:
@@ -1008,52 +942,37 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       Navigator.pop(ctx);
                     },
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: isSel
                             ? Color(acc.color).withValues(alpha: 0.1)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                            : AppTheme.bgLight,
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: isSel ? Color(acc.color) : AppTheme.divider,
-                            width: isSel ? 2 : 1),
+                            color:
+                                isSel ? Color(acc.color) : Colors.transparent,
+                            width: 1.5),
                       ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                                color: Color(acc.color).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12)),
-                            child: Center(
-                                child: Text(acc.icon,
-                                    style: const TextStyle(fontSize: 24))),
-                          ),
+                          Text(acc.icon, style: const TextStyle(fontSize: 24)),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(children: [
-                                  Text(acc.name,
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.textPrimary)),
-                                  if (acc.isPrimary) ...[
-                                    const SizedBox(width: 6),
-                                    const Icon(Icons.star,
-                                        size: 14, color: Colors.amber),
-                                  ],
-                                ]),
-                                if (isSel)
-                                  Icon(Icons.check_circle,
-                                      color: Color(acc.color), size: 20),
-                              ],
-                            ),
+                            child: Text(acc.name,
+                                style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary)),
                           ),
+                          if (acc.isPrimary)
+                            const Icon(Icons.star,
+                                size: 14, color: Colors.amber),
+                          if (isSel) ...[
+                            const SizedBox(width: 6),
+                            Icon(Icons.check_circle,
+                                color: Color(acc.color), size: 20),
+                          ],
                         ],
                       ),
                     ),
@@ -1070,9 +989,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final yesterday =
-        DateTime(now.year, now.month, now.day - 1, now.hour, now.minute);
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1089,7 +1005,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: AppTheme.divider,
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
             const Text('Pilih Tanggal',
@@ -1101,81 +1017,78 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             Text(
               DateFormat('EEEE, d MMMM yyyy • HH:mm', 'id_ID')
                   .format(_selectedDate),
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              style:
+                  const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
             ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Icon(Icons.today, color: Colors.blue.shade700),
-              title: const Text('Hari ini',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(DateFormat('d MMMM yyyy', 'id_ID').format(now),
-                  style: const TextStyle(fontSize: 12)),
-              onTap: () {
-                setState(() => _selectedDate = DateTime.now());
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.history, color: Colors.blue.shade700),
-              title: const Text('Kemarin',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(
-                  DateFormat('d MMMM yyyy', 'id_ID').format(yesterday),
-                  style: const TextStyle(fontSize: 12)),
-              onTap: () {
-                setState(() => _selectedDate = yesterday);
-                Navigator.pop(ctx);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.calendar_month, color: Colors.blue.shade700),
-              title: const Text('Pilih tanggal lain',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle:
-                  const Text('Buka kalender', style: TextStyle(fontSize: 12)),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: _selectedDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                  builder: (context, child) => Theme(
-                    data: Theme.of(context).copyWith(
-                        colorScheme:
-                            const ColorScheme.light(primary: AppTheme.accent)),
-                    child: child!,
-                  ),
-                );
-                if (picked != null && mounted) {
-                  final now2 = DateTime.now();
-                  setState(() => _selectedDate = DateTime(
-                        picked.year,
-                        picked.month,
-                        picked.day,
-                        now2.hour,
-                        now2.minute,
-                      ));
-                  _pickTime();
-                }
-              },
-            ),
-            ListTile(
-              leading:
-                  Icon(Icons.access_time_rounded, color: Colors.blue.shade700),
-              title: const Text('Ubah waktu',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Text(DateFormat('HH:mm').format(_selectedDate),
-                  style: const TextStyle(fontSize: 12)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickTime();
-              },
-            ),
+            const SizedBox(height: 8),
+            _dateTile(
+                ctx,
+                'Hari ini',
+                DateFormat('d MMMM yyyy', 'id_ID').format(now),
+                Icons.today, () {
+              setState(() => _selectedDate = DateTime.now());
+              Navigator.pop(ctx);
+            }),
+            _dateTile(
+                ctx,
+                'Kemarin',
+                DateFormat('d MMMM yyyy', 'id_ID')
+                    .format(now.subtract(const Duration(days: 1))),
+                Icons.history, () {
+              setState(
+                  () => _selectedDate = now.subtract(const Duration(days: 1)));
+              Navigator.pop(ctx);
+            }),
+            _dateTile(ctx, 'Pilih tanggal lain', 'Buka kalender',
+                Icons.calendar_month, () async {
+              Navigator.pop(ctx);
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+                builder: (context, child) => Theme(
+                  data: Theme.of(context).copyWith(
+                      colorScheme:
+                          const ColorScheme.light(primary: AppTheme.accent)),
+                  child: child!,
+                ),
+              );
+              if (picked != null && mounted) {
+                setState(() => _selectedDate = DateTime(
+                      picked.year,
+                      picked.month,
+                      picked.day,
+                      _selectedDate.hour,
+                      _selectedDate.minute,
+                    ));
+              }
+            }),
+            _dateTile(
+                ctx,
+                'Ubah waktu',
+                DateFormat('HH:mm').format(_selectedDate),
+                Icons.access_time_rounded, () {
+              Navigator.pop(ctx);
+              _pickTime();
+            }),
             const SizedBox(height: 16),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _dateTile(BuildContext ctx, String title, String subtitle,
+      IconData icon, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: AppTheme.accent),
+      title: Text(title,
+          style: const TextStyle(
+              fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+      subtitle: Text(subtitle,
+          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+      onTap: onTap,
     );
   }
 

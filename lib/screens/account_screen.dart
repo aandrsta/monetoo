@@ -163,10 +163,10 @@ class _AccountScreenState extends State<AccountScreen> {
                       color: AppTheme.textPrimary)),
               Text(
                 CurrencyFormatter.format(totalBal),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.income),
+                    color: totalBal >= 0 ? AppTheme.income : AppTheme.expense),
               ),
             ],
           ),
