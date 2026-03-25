@@ -1,7 +1,8 @@
 // lib/utils/app_toast.dart
 
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+
+import 'app_colors.dart';
 
 enum ToastType { success, error, warning, info }
 
@@ -98,15 +99,16 @@ class _ToastWidgetState extends State<_ToastWidget>
   }
 
   Color get _bgColor {
+    final colors = context.colors;
     switch (widget.type) {
       case ToastType.success:
-        return AppTheme.income;
+        return colors.income;
       case ToastType.error:
-        return AppTheme.expense;
+        return colors.expense;
       case ToastType.warning:
         return const Color(0xFFFFBE0B);
       case ToastType.info:
-        return AppTheme.accent;
+        return colors.accent;
     }
   }
 
@@ -125,6 +127,7 @@ class _ToastWidgetState extends State<_ToastWidget>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Positioned(
@@ -157,13 +160,13 @@ class _ToastWidgetState extends State<_ToastWidget>
                 ),
                 child: Row(
                   children: [
-                    Icon(_icon, color: Colors.white, size: 22),
+                    Icon(_icon, color: colors.cardBg, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         widget.message,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.cardBg,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -172,7 +175,7 @@ class _ToastWidgetState extends State<_ToastWidget>
                     const SizedBox(width: 8),
                     Icon(
                       Icons.close_rounded,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: colors.cardBg.withValues(alpha: 0.7),
                       size: 18,
                     ),
                   ],

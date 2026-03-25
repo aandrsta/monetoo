@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/update_checker.dart';
 import 'transaction_screen.dart';
 import 'category_screen.dart';
@@ -49,6 +49,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
       body: PageView(
         controller: _pageController,
@@ -59,7 +60,7 @@ class _MainNavigationState extends State<MainNavigation> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.navBarBg,
           boxShadow: [
             BoxShadow(
               blurRadius: 20,
@@ -71,36 +72,22 @@ class _MainNavigationState extends State<MainNavigation> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
-              rippleColor: AppTheme.accent.withValues(alpha: 0.15),
-              hoverColor: AppTheme.accent.withValues(alpha: 0.1),
+              rippleColor: c.accent.withValues(alpha: 0.15),
+              hoverColor: c.accent.withValues(alpha: 0.1),
               gap: 8,
-              activeColor: AppTheme.accent,
+              activeColor: c.accent,
               iconSize: 24,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-              color: AppTheme.textSecondary,
+              tabBackgroundColor: c.accent.withValues(alpha: 0.1),
+              color: c.textSecondary,
               tabs: const [
                 GButton(
-                  icon: Icons.account_balance_wallet_rounded,
-                  text: 'Akun',
-                ),
-                GButton(
-                  icon: Icons.receipt_long_rounded,
-                  text: 'Transaksi',
-                ),
-                GButton(
-                  icon: Icons.category_rounded,
-                  text: 'Kategori',
-                ),
-                GButton(
-                  icon: Icons.bar_chart_rounded,
-                  text: 'Statistik',
-                ),
-                GButton(
-                  icon: Icons.settings_rounded,
-                  text: 'Pengaturan',
-                ),
+                    icon: Icons.account_balance_wallet_rounded, text: 'Akun'),
+                GButton(icon: Icons.receipt_long_rounded, text: 'Transaksi'),
+                GButton(icon: Icons.category_rounded, text: 'Kategori'),
+                GButton(icon: Icons.bar_chart_rounded, text: 'Statistik'),
+                GButton(icon: Icons.settings_rounded, text: 'Pengaturan'),
               ],
               selectedIndex: _currentIndex,
               onTabChange: (index) {

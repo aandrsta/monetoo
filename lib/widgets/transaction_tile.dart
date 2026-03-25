@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
 import '../providers/finance_provider.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 
@@ -22,9 +22,9 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final isIncome = transaction.type == TransactionType.income;
 
-    // Ambil nama akun dari provider
     final accounts = context.watch<FinanceProvider>().accounts;
     final account = transaction.accountId != null
         ? accounts.where((a) => a.id == transaction.accountId).firstOrNull
@@ -40,10 +40,10 @@ class TransactionTile extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: AppTheme.expense,
+          color: c.expense,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.delete_rounded, color: Colors.white),
+        child: Icon(Icons.delete_rounded, color: c.cardBg),
       ),
       confirmDismiss: (_) async => await _showDeleteConfirm(context),
       onDismissed: (_) {
@@ -55,13 +55,12 @@ class TransactionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: c.cardBg,
             borderRadius: BorderRadius.circular(14),
-            boxShadow: AppTheme.cardShadow,
+            boxShadow: c.cardShadow,
           ),
           child: Row(
             children: [
-              // Ikon kategori
               Container(
                 width: 44,
                 height: 44,
@@ -72,34 +71,27 @@ class TransactionTile extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(transaction.categoryIcon,
-                      style: const TextStyle(fontSize: 20)),
+                      style: TextStyle(fontSize: 20)),
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Teks tengah
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Judul
                     Text(
                       transaction.categoryName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary,
+                        color: c.textPrimary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-
-                    // Baris kedua: akun pill + catatan (kalau ada)
-                    // Kalau tidak ada keduanya → tidak tampil apapun
                     if (account != null || hasNote) ...[
                       const SizedBox(height: 3),
                       Row(
                         children: [
-                          // Pill akun
                           if (account != null) ...[
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -113,7 +105,7 @@ class TransactionTile extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(account.icon,
-                                      style: const TextStyle(fontSize: 10)),
+                                      style: TextStyle(fontSize: 10)),
                                   const SizedBox(width: 3),
                                   Text(
                                     account.name,
@@ -128,14 +120,13 @@ class TransactionTile extends StatelessWidget {
                             ),
                             if (hasNote) const SizedBox(width: 6),
                           ],
-                          // Catatan — hanya kalau ada
                           if (hasNote)
                             Flexible(
                               child: Text(
                                 transaction.note!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: AppTheme.textSecondary,
+                                  color: c.textSecondary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -147,8 +138,6 @@ class TransactionTile extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Nominal + waktu
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -157,15 +146,15 @@ class TransactionTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: isIncome ? AppTheme.income : AppTheme.expense,
+                      color: isIncome ? c.income : c.expense,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     DateFormatter.formatTime(transaction.date),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: AppTheme.textSecondary,
+                      color: c.textSecondary,
                     ),
                   ),
                 ],
@@ -178,13 +167,14 @@ class TransactionTile extends StatelessWidget {
   }
 
   Future<bool?> _showDeleteConfirm(BuildContext context) {
+    final c = context.colors;
     return showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: c.modalBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
@@ -195,30 +185,29 @@ class TransactionTile extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                  color: AppTheme.divider,
-                  borderRadius: BorderRadius.circular(2)),
+                  color: c.divider, borderRadius: BorderRadius.circular(2)),
             ),
             Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                  color: AppTheme.expense.withValues(alpha: 0.1),
+                  color: c.expense.withValues(alpha: 0.1),
                   shape: BoxShape.circle),
-              child: const Icon(Icons.delete_outline_rounded,
-                  color: AppTheme.expense, size: 28),
+              child: Icon(Icons.delete_outline_rounded,
+                  color: c.expense, size: 28),
             ),
             const SizedBox(height: 16),
-            const Text('Hapus Transaksi?',
+            Text('Hapus Transaksi?',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Transaksi ini akan dihapus permanen\ndan tidak bisa dikembalikan.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
+              style:
+                  TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
             ),
             const SizedBox(height: 24),
             Row(
@@ -229,14 +218,14 @@ class TransactionTile extends StatelessWidget {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.bgLight,
+                          color: c.bgLight,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                           child: Text('Batal',
                               style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textSecondary))),
+                                  color: c.textSecondary))),
                     ),
                   ),
                 ),
@@ -247,14 +236,14 @@ class TransactionTile extends StatelessWidget {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.expense,
+                          color: c.expense,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                           child: Text('Hapus',
                               style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white))),
+                                  color: c.cardBg))),
                     ),
                   ),
                 ),

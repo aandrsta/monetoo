@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
 import '../providers/finance_provider.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
@@ -21,6 +21,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   DateTime _selectedMonth = DateTime.now();
 
   Future<void> _pickMonth(BuildContext context) async {
+    final c = context.colors;
     int pickedYear = _selectedMonth.year;
     int pickedMonth = _selectedMonth.month;
 
@@ -28,10 +29,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
+          backgroundColor: c.modalBg,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Pilih Bulan',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          title: Text('Pilih Bulan',
+              style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary)),
           content: SizedBox(
             width: 280,
             child: Column(
@@ -42,14 +47,18 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   children: [
                     IconButton(
                       onPressed: () => setD(() => pickedYear--),
-                      icon: const Icon(Icons.chevron_left_rounded),
+                      icon: Icon(Icons.chevron_left_rounded,
+                          color: c.textPrimary),
                     ),
                     Text('$pickedYear',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: c.textPrimary)),
                     IconButton(
                       onPressed: () => setD(() => pickedYear++),
-                      icon: const Icon(Icons.chevron_right_rounded),
+                      icon: Icon(Icons.chevron_right_rounded,
+                          color: c.textPrimary),
                     ),
                   ],
                 ),
@@ -85,8 +94,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                       onTap: () => setD(() => pickedMonth = m),
                       child: Container(
                         decoration: BoxDecoration(
-                          color:
-                              isSelected ? AppTheme.accent : AppTheme.bgLight,
+                          color: isSelected ? c.accent : c.bgLight,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
@@ -94,9 +102,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppTheme.textSecondary)),
+                                  color:
+                                      isSelected ? c.cardBg : c.textSecondary)),
                         ),
                       ),
                     );
@@ -108,8 +115,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal',
-                  style: TextStyle(color: AppTheme.textSecondary)),
+              child: Text('Batal', style: TextStyle(color: c.textSecondary)),
             ),
             TextButton(
               onPressed: () {
@@ -118,8 +124,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 });
                 Navigator.pop(ctx);
               },
-              child:
-                  const Text('Pilih', style: TextStyle(color: AppTheme.accent)),
+              child: Text('Pilih', style: TextStyle(color: c.accent)),
             ),
           ],
         ),
@@ -129,8 +134,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 0),
         child: FloatingActionButton.extended(
@@ -142,10 +148,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
               builder: (_) => const AddTransactionBottomSheet(),
             );
           },
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Tambah'),
-          backgroundColor: AppTheme.accent,
-          foregroundColor: Colors.white,
+          icon: Icon(Icons.add_rounded),
+          label: Text('Tambah'),
+          backgroundColor: c.accent,
+          foregroundColor: c.cardBg,
           elevation: 0,
           highlightElevation: 0,
         ),
@@ -156,15 +162,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
           builder: (context, provider, _) {
             return Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Row(
                     children: [
                       Text('Transaksi',
                           style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary)),
+                              color: c.textPrimary)),
                     ],
                   ),
                 ),
@@ -218,6 +224,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Widget _buildMonthSelector(BuildContext context) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
@@ -228,10 +235,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
               _selectedMonth =
                   DateTime(_selectedMonth.year, _selectedMonth.month - 1);
             }),
-            icon: const Icon(Icons.chevron_left_rounded,
-                color: AppTheme.textPrimary),
+            icon: Icon(Icons.chevron_left_rounded, color: c.textPrimary),
           ),
-          // Tap tengah → buka month picker
           GestureDetector(
             onTap: () => _pickMonth(context),
             child: Row(
@@ -239,25 +244,23 @@ class _TransactionScreenState extends State<TransactionScreen> {
               children: [
                 Text(
                   DateFormatter.formatMonthYear(_selectedMonth),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary),
+                      color: c.textPrimary),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.keyboard_arrow_down_rounded,
-                    size: 18, color: AppTheme.textSecondary),
+                Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 18, color: c.textSecondary),
               ],
             ),
           ),
-          // FIX: hapus guard isCurrentMonth — bisa navigasi bebas
           IconButton(
             onPressed: () => setState(() {
               _selectedMonth =
                   DateTime(_selectedMonth.year, _selectedMonth.month + 1);
             }),
-            icon: const Icon(Icons.chevron_right_rounded,
-                color: AppTheme.textPrimary),
+            icon: Icon(Icons.chevron_right_rounded, color: c.textPrimary),
           ),
         ],
       ),
@@ -282,30 +285,31 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Widget _filterChip(String value, String label, IconData icon) {
+    final c = context.colors;
     final isSelected = _filter == value;
-    Color color = AppTheme.accent;
-    if (value == 'income') color = AppTheme.income;
-    if (value == 'expense') color = AppTheme.expense;
+    Color color = c.accent;
+    if (value == 'income') color = c.income;
+    if (value == 'expense') color = c.expense;
 
     return GestureDetector(
       onTap: () => setState(() => _filter = value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.white,
+          color: isSelected ? color : c.cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? color : AppTheme.divider),
-          boxShadow: isSelected ? [] : AppTheme.cardShadow,
+          border: Border.all(color: isSelected ? color : c.divider),
+          boxShadow: isSelected ? [] : c.cardShadow,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: isSelected ? Colors.white : color),
+            Icon(icon, size: 14, color: isSelected ? c.cardBg : color),
             const SizedBox(width: 6),
             Text(label,
                 style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isSelected ? Colors.white : AppTheme.textSecondary)),
+                    color: isSelected ? c.cardBg : c.textSecondary)),
           ],
         ),
       ),
@@ -313,6 +317,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Widget _buildMonthlySummary(double income, double expense) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -321,18 +326,18 @@ class _TransactionScreenState extends State<TransactionScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                  color: AppTheme.incomeLight,
+                  color: c.incomeLight,
                   borderRadius: BorderRadius.circular(12)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Masuk',
-                      style: TextStyle(fontSize: 11, color: AppTheme.income)),
+                  Text('Masuk',
+                      style: TextStyle(fontSize: 11, color: c.income)),
                   Text(CurrencyFormatter.formatCompact(income),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.income)),
+                          color: c.income)),
                 ],
               ),
             ),
@@ -342,18 +347,18 @@ class _TransactionScreenState extends State<TransactionScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                  color: AppTheme.expenseLight,
+                  color: c.expenseLight,
                   borderRadius: BorderRadius.circular(12)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Keluar',
-                      style: TextStyle(fontSize: 11, color: AppTheme.expense)),
+                  Text('Keluar',
+                      style: TextStyle(fontSize: 11, color: c.expense)),
                   Text(CurrencyFormatter.formatCompact(expense),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.expense)),
+                          color: c.expense)),
                 ],
               ),
             ),
@@ -363,18 +368,17 @@ class _TransactionScreenState extends State<TransactionScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                  color: AppTheme.bgLight,
-                  borderRadius: BorderRadius.circular(12)),
+                  color: c.bgLight, borderRadius: BorderRadius.circular(12)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Saldo',
-                      style: TextStyle(fontSize: 11, color: AppTheme.accent)),
+                  Text('Saldo',
+                      style: TextStyle(fontSize: 11, color: c.accent)),
                   Text(CurrencyFormatter.formatCompact(income - expense),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.accent)),
+                          color: c.accent)),
                 ],
               ),
             ),
@@ -386,9 +390,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   Widget _buildGroupedList(
       List<TransactionModel> transactions, FinanceProvider provider) {
+    final c = context.colors;
     final Map<String, List<TransactionModel>> groups = {};
     for (final t in transactions) {
-      // FIX: zero-padded key supaya sorting string = sorting tanggal
       final key =
           '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}-${t.date.day.toString().padLeft(2, '0')}';
       groups[key] ??= [];
@@ -423,26 +427,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     DateFormatter.isSameDay(date, DateTime.now())
                         ? 'Hari ini'
                         : DateFormatter.formatShort(date),
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textSecondary),
+                        color: c.textSecondary),
                   ),
                   Row(
                     children: [
                       if (dayIncome > 0)
                         Text('+${CurrencyFormatter.formatCompact(dayIncome)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.income,
+                                color: c.income,
                                 fontWeight: FontWeight.w500)),
                       if (dayIncome > 0 && dayExpense > 0)
                         const SizedBox(width: 8),
                       if (dayExpense > 0)
                         Text('-${CurrencyFormatter.formatCompact(dayExpense)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.expense,
+                                color: c.expense,
                                 fontWeight: FontWeight.w500)),
                     ],
                   ),
@@ -469,14 +473,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Widget _buildEmpty() {
-    return const Center(
+    final c = context.colors;
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_rounded, size: 64, color: AppTheme.divider),
-          SizedBox(height: 16),
+          Icon(Icons.receipt_long_rounded, size: 64, color: c.divider),
+          const SizedBox(height: 16),
           Text('Tidak ada transaksi',
-              style: TextStyle(fontSize: 15, color: AppTheme.textSecondary)),
+              style: TextStyle(fontSize: 15, color: c.textSecondary)),
         ],
       ),
     );

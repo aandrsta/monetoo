@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../providers/finance_provider.dart';
 import '../models/category_model.dart';
 import '../models/transaction_model.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
@@ -126,6 +126,7 @@ class _CategoryScreenState extends State<CategoryScreen>
   Future<void> _pickMonth(BuildContext context) async {
     int pickedYear = _selectedMonth.year;
     int pickedMonth = _selectedMonth.month;
+    final c = context.colors;
 
     await showDialog(
       context: context,
@@ -133,7 +134,7 @@ class _CategoryScreenState extends State<CategoryScreen>
         builder: (ctx, setD) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Pilih Bulan',
+          title: Text('Pilih Bulan',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
           content: SizedBox(
             width: 280,
@@ -145,14 +146,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                   children: [
                     IconButton(
                       onPressed: () => setD(() => pickedYear--),
-                      icon: const Icon(Icons.chevron_left_rounded),
+                      icon: Icon(Icons.chevron_left_rounded),
                     ),
                     Text('$pickedYear',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600)),
                     IconButton(
                       onPressed: () => setD(() => pickedYear++),
-                      icon: const Icon(Icons.chevron_right_rounded),
+                      icon: Icon(Icons.chevron_right_rounded),
                     ),
                   ],
                 ),
@@ -188,8 +189,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                       onTap: () => setD(() => pickedMonth = m),
                       child: Container(
                         decoration: BoxDecoration(
-                          color:
-                              isSelected ? AppTheme.accent : AppTheme.bgLight,
+                          color: isSelected ? c.accent : c.bgLight,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
@@ -197,9 +197,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                               style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppTheme.textSecondary)),
+                                  color:
+                                      isSelected ? c.cardBg : c.textSecondary)),
                         ),
                       ),
                     );
@@ -211,8 +210,7 @@ class _CategoryScreenState extends State<CategoryScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal',
-                  style: TextStyle(color: AppTheme.textSecondary)),
+              child: Text('Batal', style: TextStyle(color: c.textSecondary)),
             ),
             TextButton(
               onPressed: () {
@@ -221,8 +219,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                 });
                 Navigator.pop(ctx);
               },
-              child:
-                  const Text('Pilih', style: TextStyle(color: AppTheme.accent)),
+              child: Text('Pilih', style: TextStyle(color: c.accent)),
             ),
           ],
         ),
@@ -232,8 +229,9 @@ class _CategoryScreenState extends State<CategoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
@@ -264,10 +262,9 @@ class _CategoryScreenState extends State<CategoryScreen>
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Saldo keseluruhan',
+                              Text('Saldo keseluruhan',
                                   style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppTheme.textSecondary)),
+                                      fontSize: 14, color: c.textSecondary)),
                               const SizedBox(height: 4),
                               Text(
                                 CurrencyFormatter.format(monthlyBalance),
@@ -275,8 +272,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   fontSize: 32,
                                   fontWeight: FontWeight.w700,
                                   color: monthlyBalance >= 0
-                                      ? AppTheme.textPrimary
-                                      : AppTheme.expense,
+                                      ? c.textPrimary
+                                      : c.expense,
                                 ),
                               ),
                             ],
@@ -295,16 +292,15 @@ class _CategoryScreenState extends State<CategoryScreen>
                               height: 44,
                               decoration: BoxDecoration(
                                 color: _editMode
-                                    ? AppTheme.accent
-                                    : AppTheme.accent.withValues(alpha: 0.1),
+                                    ? c.accent
+                                    : c.accent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 _editMode
                                     ? Icons.edit_rounded
                                     : Icons.edit_outlined,
-                                color:
-                                    _editMode ? Colors.white : AppTheme.accent,
+                                color: _editMode ? c.cardBg : c.accent,
                                 size: 20,
                               ),
                             ),
@@ -319,8 +315,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                         children: [
                           IconButton(
                             onPressed: () => _changeMonth(-1),
-                            icon: const Icon(Icons.chevron_left_rounded,
-                                color: AppTheme.textPrimary),
+                            icon: Icon(Icons.chevron_left_rounded,
+                                color: c.textPrimary),
                           ),
                           GestureDetector(
                             onTap: () => _pickMonth(context),
@@ -329,21 +325,21 @@ class _CategoryScreenState extends State<CategoryScreen>
                               children: [
                                 Text(
                                   DateFormatter.formatMonthYear(_selectedMonth),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary),
+                                      color: c.textPrimary),
                                 ),
                                 const SizedBox(width: 4),
-                                const Icon(Icons.keyboard_arrow_down_rounded,
-                                    size: 18, color: AppTheme.textSecondary),
+                                Icon(Icons.keyboard_arrow_down_rounded,
+                                    size: 18, color: c.textSecondary),
                               ],
                             ),
                           ),
                           IconButton(
                             onPressed: () => _changeMonth(1),
-                            icon: const Icon(Icons.chevron_right_rounded,
-                                color: AppTheme.textPrimary),
+                            icon: Icon(Icons.chevron_right_rounded,
+                                color: c.textPrimary),
                           ),
                         ],
                       ),
@@ -359,12 +355,12 @@ class _CategoryScreenState extends State<CategoryScreen>
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: c.cardBg,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color:
                                         _selectedType == TransactionType.expense
-                                            ? AppTheme.expense
+                                            ? c.expense
                                             : Colors.grey.shade200,
                                     width: 2,
                                   ),
@@ -385,16 +381,16 @@ class _CategoryScreenState extends State<CategoryScreen>
                                           fontSize: 12,
                                           color: _selectedType ==
                                                   TransactionType.expense
-                                              ? AppTheme.expense
-                                              : AppTheme.textSecondary),
+                                              ? c.expense
+                                              : c.textSecondary),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       CurrencyFormatter.format(monthlyExpense),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
-                                          color: AppTheme.expense),
+                                          color: c.expense),
                                     ),
                                   ],
                                 ),
@@ -409,12 +405,12 @@ class _CategoryScreenState extends State<CategoryScreen>
                               child: Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: c.cardBg,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color:
                                         _selectedType == TransactionType.income
-                                            ? AppTheme.income
+                                            ? c.income
                                             : Colors.grey.shade200,
                                     width: 2,
                                   ),
@@ -435,16 +431,16 @@ class _CategoryScreenState extends State<CategoryScreen>
                                           fontSize: 12,
                                           color: _selectedType ==
                                                   TransactionType.income
-                                              ? AppTheme.income
-                                              : AppTheme.textSecondary),
+                                              ? c.income
+                                              : c.textSecondary),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       CurrencyFormatter.format(monthlyIncome),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
-                                          color: AppTheme.income),
+                                          color: c.income),
                                     ),
                                   ],
                                 ),
@@ -460,24 +456,22 @@ class _CategoryScreenState extends State<CategoryScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppTheme.accent.withValues(alpha: 0.08),
+                            color: c.accent.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: AppTheme.accent.withValues(alpha: 0.2)),
+                                color: c.accent.withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             children: [
                               Icon(Icons.info_outline_rounded,
                                   size: 16,
-                                  color:
-                                      AppTheme.accent.withValues(alpha: 0.8)),
+                                  color: c.accent.withValues(alpha: 0.8)),
                               const SizedBox(width: 8),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Mode edit aktif — ketuk kategori untuk ubah atau hapus',
                                   style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.textSecondary),
+                                      fontSize: 12, color: c.textSecondary),
                                 ),
                               ),
                             ],
@@ -501,6 +495,7 @@ class _CategoryScreenState extends State<CategoryScreen>
 
   Widget _buildCategoryGrid(
       FinanceProvider provider, List<TransactionModel> monthlyTx) {
+    // final c = context.colors;
     final Map<String, Map<String, dynamic>> stats = {};
     for (final t in monthlyTx) {
       stats[t.categoryName] ??= {'amount': 0.0, 'count': 0, 'type': t.type};
@@ -538,6 +533,7 @@ class _CategoryScreenState extends State<CategoryScreen>
     Map<String, dynamic> stats,
     FinanceProvider provider,
   ) {
+    final c = context.colors;
     final amount = stats['amount'] ?? 0.0;
     final isEditMode = _editMode;
 
@@ -561,7 +557,7 @@ class _CategoryScreenState extends State<CategoryScreen>
         decoration: BoxDecoration(
           color: isEditMode
               ? Color(category.color).withValues(alpha: 0.08)
-              : Colors.white,
+              : c.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isEditMode
@@ -590,8 +586,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
-                    child: Text(category.icon,
-                        style: const TextStyle(fontSize: 22)),
+                    child: Text(category.icon, style: TextStyle(fontSize: 22)),
                   ),
                 ),
                 if (isEditMode)
@@ -602,12 +597,11 @@ class _CategoryScreenState extends State<CategoryScreen>
                       width: 16,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: AppTheme.accent,
+                        color: c.accent,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+                        border: Border.all(color: c.cardBg, width: 1.5),
                       ),
-                      child: const Icon(Icons.edit_rounded,
-                          size: 8, color: Colors.white),
+                      child: Icon(Icons.edit_rounded, size: 8, color: c.cardBg),
                     ),
                   ),
               ],
@@ -620,10 +614,10 @@ class _CategoryScreenState extends State<CategoryScreen>
                 children: [
                   Text(
                     category.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary),
+                        color: c.textPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -637,10 +631,10 @@ class _CategoryScreenState extends State<CategoryScreen>
                       fontWeight:
                           isEditMode ? FontWeight.w400 : FontWeight.w700,
                       color: isEditMode
-                          ? AppTheme.textSecondary
+                          ? c.textSecondary
                           : category.type == TransactionType.expense
-                              ? AppTheme.expense
-                              : AppTheme.income,
+                              ? c.expense
+                              : c.income,
                     ),
                   ),
                 ],
@@ -653,6 +647,7 @@ class _CategoryScreenState extends State<CategoryScreen>
   }
 
   Widget _buildAddCategoryButton() {
+    final c = context.colors;
     return GestureDetector(
       onTap: () {
         if (_editMode) setState(() => _editMode = false);
@@ -661,10 +656,9 @@ class _CategoryScreenState extends State<CategoryScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: AppTheme.accent.withValues(alpha: 0.3), width: 2),
+          border: Border.all(color: c.accent.withValues(alpha: 0.3), width: 2),
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -678,18 +672,17 @@ class _CategoryScreenState extends State<CategoryScreen>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  color: c.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.add_rounded,
-                  color: AppTheme.accent, size: 24),
+              child: Icon(Icons.add_rounded, color: c.accent, size: 24),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Text('Tambah kategori',
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.accent)),
+                      color: c.accent)),
             ),
           ],
         ),
@@ -701,6 +694,7 @@ class _CategoryScreenState extends State<CategoryScreen>
 
   void _showCategorySheet(BuildContext context, CategoryModel? existing,
       TransactionType defaultType) {
+    final c = context.colors;
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     String selectedIcon = existing?.icon ?? '📦';
     int selectedColor = existing?.color ?? 0xFF7C6FFF;
@@ -734,9 +728,9 @@ class _CategoryScreenState extends State<CategoryScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) => Container(
           height: MediaQuery.of(ctx).size.height * 0.82,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: c.cardBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,18 +741,17 @@ class _CategoryScreenState extends State<CategoryScreen>
                   height: 4,
                   margin: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                      color: AppTheme.divider,
-                      borderRadius: BorderRadius.circular(2)),
+                      color: c.divider, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Text(
                   existing == null ? 'Tambah kategori' : 'Edit kategori',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary),
+                      color: c.textPrimary),
                 ),
               ),
               Expanded(
@@ -769,7 +762,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                     children: [
                       // Tipe (hanya saat tambah baru)
                       if (existing == null) ...[
-                        const Text('Tipe',
+                        Text('Tipe',
                             style: TextStyle(
                                 fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 8),
@@ -779,7 +772,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                               'Pengeluaran',
                               TransactionType.expense,
                               selectedType,
-                              AppTheme.expense,
+                              c.expense,
                               (t) => setModal(() => selectedType = t),
                             ),
                           ),
@@ -789,7 +782,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                               'Pemasukan',
                               TransactionType.income,
                               selectedType,
-                              AppTheme.income,
+                              c.income,
                               (t) => setModal(() => selectedType = t),
                             ),
                           ),
@@ -798,17 +791,17 @@ class _CategoryScreenState extends State<CategoryScreen>
                       ],
 
                       // Nama
-                      const Text('Nama Kategori',
+                      Text('Nama Kategori',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: nameCtrl,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 14),
                         decoration: InputDecoration(
                           hintText: 'Contoh: Kuliner, Transport...',
                           prefixIcon: Text(selectedIcon,
-                              style: const TextStyle(fontSize: 20),
+                              style: TextStyle(fontSize: 20),
                               textAlign: TextAlign.center),
                           prefixIconConstraints:
                               const BoxConstraints(minWidth: 48, maxWidth: 48),
@@ -829,11 +822,11 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   colors[rng.nextInt(colors.length)];
                             });
                           },
-                          icon: const Icon(Icons.shuffle_rounded),
-                          label: const Text('Acak Ikon & Warna'),
+                          icon: Icon(Icons.shuffle_rounded),
+                          label: Text('Acak Ikon & Warna'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.accent,
-                            side: const BorderSide(color: AppTheme.accent),
+                            foregroundColor: c.accent,
+                            side: BorderSide(color: c.accent),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
@@ -843,7 +836,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                       const SizedBox(height: 20),
 
                       // ── ICON PICKER — tombol buka dialog ──
-                      const Text('Pilih Ikon',
+                      Text('Pilih Ikon',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 8),
@@ -864,7 +857,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppTheme.bgLight,
+                            color: c.bgLight,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color:
@@ -884,7 +877,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                                 ),
                                 child: Center(
                                   child: Text(selectedIcon,
-                                      style: const TextStyle(fontSize: 28)),
+                                      style: TextStyle(fontSize: 28)),
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -892,16 +885,15 @@ class _CategoryScreenState extends State<CategoryScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Ikon terpilih',
+                                    Text('Ikon terpilih',
                                         style: TextStyle(
                                             fontSize: 11,
-                                            color: AppTheme.textSecondary)),
+                                            color: c.textSecondary)),
                                     const SizedBox(height: 2),
                                     Text(
                                       '${allIcons.length} ikon tersedia — ketuk untuk ganti',
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.textSecondary),
+                                      style: TextStyle(
+                                          fontSize: 12, color: c.textSecondary),
                                     ),
                                   ],
                                 ),
@@ -911,14 +903,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.accent.withValues(alpha: 0.1),
+                                  color: c.accent.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Text('Ganti',
+                                child: Text('Ganti',
                                     style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: AppTheme.accent)),
+                                        color: c.accent)),
                               ),
                             ],
                           ),
@@ -930,12 +922,12 @@ class _CategoryScreenState extends State<CategoryScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Pilih Warna',
+                          Text('Pilih Warna',
                               style: TextStyle(
                                   fontSize: 13, fontWeight: FontWeight.w600)),
                           Text('${colors.length} warna',
-                              style: const TextStyle(
-                                  fontSize: 11, color: AppTheme.textSecondary)),
+                              style: TextStyle(
+                                  fontSize: 11, color: c.textSecondary)),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -959,7 +951,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                               shape: BoxShape.circle,
                               border: Border.all(
                                   color: selectedColor == colors[i]
-                                      ? Colors.white
+                                      ? c.cardBg
                                       : Colors.transparent,
                                   width: 2),
                               boxShadow: selectedColor == colors[i]
@@ -972,8 +964,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                                   : [],
                             ),
                             child: selectedColor == colors[i]
-                                ? const Icon(Icons.check_rounded,
-                                    color: Colors.white, size: 16)
+                                ? Icon(Icons.check_rounded,
+                                    color: c.cardBg, size: 16)
                                 : null,
                           ),
                         ),
@@ -987,11 +979,11 @@ class _CategoryScreenState extends State<CategoryScreen>
                           child: OutlinedButton.icon(
                             onPressed: () =>
                                 _confirmDeleteCategory(ctx, existing),
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Hapus Kategori'),
+                            icon: Icon(Icons.delete_outline_rounded),
+                            label: Text('Hapus Kategori'),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.expense,
-                              side: const BorderSide(color: AppTheme.expense),
+                              foregroundColor: c.expense,
+                              side: BorderSide(color: c.expense),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
@@ -1044,7 +1036,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                             existing == null
                                 ? 'Tambah kategori'
                                 : 'Simpan Perubahan',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -1063,12 +1055,13 @@ class _CategoryScreenState extends State<CategoryScreen>
   // ── CONFIRM DELETE CATEGORY ──
 
   void _confirmDeleteCategory(BuildContext sheetCtx, CategoryModel category) {
+    final c = context.colors;
     showModalBottomSheet(
       context: sheetCtx,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: c.cardBg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
@@ -1080,31 +1073,30 @@ class _CategoryScreenState extends State<CategoryScreen>
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                  color: AppTheme.divider,
-                  borderRadius: BorderRadius.circular(2)),
+                  color: c.divider, borderRadius: BorderRadius.circular(2)),
             ),
             Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppTheme.expense.withValues(alpha: 0.1),
+                color: c.expense.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_outline_rounded,
-                  color: AppTheme.expense, size: 28),
+              child: Icon(Icons.delete_outline_rounded,
+                  color: c.expense, size: 28),
             ),
             const SizedBox(height: 16),
-            const Text('Hapus Kategori?',
+            Text('Hapus Kategori?',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: 8),
             Text(
               'Kategori "${category.name}" akan dihapus permanen.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
+              style:
+                  TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
             ),
             const SizedBox(height: 24),
             Row(
@@ -1115,14 +1107,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.bgLight,
+                          color: c.bgLight,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text('Batal',
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary)),
+                                color: c.textSecondary)),
                       ),
                     ),
                   ),
@@ -1149,14 +1141,14 @@ class _CategoryScreenState extends State<CategoryScreen>
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.expense,
+                          color: c.expense,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text('Hapus',
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white)),
+                                color: c.cardBg)),
                       ),
                     ),
                   ),
@@ -1176,13 +1168,14 @@ class _CategoryScreenState extends State<CategoryScreen>
     Color color,
     Function(TransactionType) onTap,
   ) {
+    final c = context.colors;
     final isSel = type == selected;
     return GestureDetector(
       onTap: () => onTap(type),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSel ? color : AppTheme.bgLight,
+          color: isSel ? color : c.bgLight,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Center(
@@ -1190,7 +1183,7 @@ class _CategoryScreenState extends State<CategoryScreen>
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isSel ? Colors.white : AppTheme.textSecondary)),
+                  color: isSel ? c.cardBg : c.textSecondary)),
         ),
       ),
     );
@@ -1223,6 +1216,7 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final totalIcons = kAllIcons.length;
 
     return Dialog(
@@ -1242,14 +1236,14 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Pilih Ikon',
+                      Text('Pilih Ikon',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: AppTheme.textPrimary)),
+                              color: c.textPrimary)),
                       Text('$totalIcons ikon tersedia',
-                          style: const TextStyle(
-                              fontSize: 12, color: AppTheme.textSecondary)),
+                          style:
+                              TextStyle(fontSize: 12, color: c.textSecondary)),
                     ],
                   ),
                   Row(
@@ -1265,13 +1259,12 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
                         ),
                         child: Center(
                             child: Text(_selected,
-                                style: const TextStyle(fontSize: 22))),
+                                style: TextStyle(fontSize: 22))),
                       ),
                       const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close_rounded,
-                            color: AppTheme.textSecondary),
+                        icon: Icon(Icons.close_rounded, color: c.textSecondary),
                       ),
                     ],
                   ),
@@ -1279,7 +1272,7 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            const Divider(height: 1, color: AppTheme.divider),
+            Divider(height: 1, color: c.divider),
 
             // ── Scrollable icon grid per grup ──
             Expanded(
@@ -1298,10 +1291,10 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
                         padding: const EdgeInsets.only(bottom: 10),
                         child: Text(
                           group['label'] as String,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.textSecondary,
+                            color: c.textSecondary,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -1331,7 +1324,7 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
                                 color: isSel
                                     ? Color(widget.selectedColor)
                                         .withValues(alpha: 0.18)
-                                    : AppTheme.bgLight,
+                                    : c.bgLight,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                     color: isSel
@@ -1340,8 +1333,8 @@ class _IconPickerDialogState extends State<_IconPickerDialog> {
                                     width: 2),
                               ),
                               child: Center(
-                                  child: Text(ic,
-                                      style: const TextStyle(fontSize: 20))),
+                                  child:
+                                      Text(ic, style: TextStyle(fontSize: 20))),
                             ),
                           );
                         },

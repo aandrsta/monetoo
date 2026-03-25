@@ -8,6 +8,7 @@ import '../models/transaction_model.dart';
 import '../models/category_model.dart';
 import '../models/account_model.dart';
 import '../providers/finance_provider.dart';
+import '../utils/app_colors.dart';
 import '../utils/app_theme.dart';
 import '../utils/app_toast.dart';
 
@@ -40,10 +41,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   TransactionType _selectedType = TransactionType.expense;
 
   bool get _isEditing => widget.transaction != null;
-
-  // Warna latar akun & kategori — light theme
-  static const Color _accountBg = Color(0xFFEEF2FF);
-  static const Color _categoryBg = Color(0xFFF3EEFF);
 
   @override
   void initState() {
@@ -107,8 +104,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     _noteController.dispose();
     super.dispose();
   }
-
-  // ── KALKULASI ──
 
   void _onNumber(String n) {
     setState(() {
@@ -211,8 +206,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         .replaceAll(',', '.');
   }
 
-  // ── SIMPAN ──
-
   void _onSave() async {
     if (_selectedCategory == null) {
       AppToast.error(context, 'Pilih kategori terlebih dahulu');
@@ -271,48 +264,47 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     }
   }
 
-  // ── BUILD ──
-
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final isExpense = _selectedType == TransactionType.expense;
-    final typeColor = isExpense ? AppTheme.expense : AppTheme.income;
+    final typeColor = isExpense ? c.expense : c.income;
     final hasOp = _previousValue != null && _operation != null;
 
+    // Warna background pill akun & kategori — sedikit berbeda per type
+    final accountBg = c.accent.withValues(alpha: 0.08);
+    final categoryBg = typeColor.withValues(alpha: 0.08);
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: c.modalBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
           Container(
             width: 36,
             height: 4,
             margin: const EdgeInsets.only(top: 10, bottom: 4),
             decoration: BoxDecoration(
-              color: AppTheme.divider,
+              color: c.divider,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
 
-          // ── TYPE SELECTOR (hanya saat tambah baru) ──
+          // ── TYPE SELECTOR ──
           if (!_isEditing)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Container(
                 height: 44,
                 decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12)),
+                    color: c.bgLight, borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    _typeTab('Pengeluaran', TransactionType.expense,
-                        AppTheme.expense),
-                    _typeTab(
-                        'Pemasukan', TransactionType.income, AppTheme.income),
+                    _typeTab('Pengeluaran', TransactionType.expense, c.expense),
+                    _typeTab('Pemasukan', TransactionType.income, c.income),
                   ],
                 ),
               ),
@@ -330,27 +322,27 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: _accountBg,
+                        color: accountBg,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Dari akun',
+                          Text('Dari akun',
                               style: TextStyle(
-                                  fontSize: 11, color: AppTheme.textSecondary)),
+                                  fontSize: 11, color: c.textSecondary)),
                           const SizedBox(height: 6),
                           Row(children: [
                             Text(_selectedAccount?.icon ?? '💳',
-                                style: const TextStyle(fontSize: 18)),
+                                style: TextStyle(fontSize: 18)),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _selectedAccount?.name ?? 'Pilih',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary),
+                                    color: c.textPrimary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -369,27 +361,27 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: _categoryBg,
+                        color: categoryBg,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Ke kategori',
+                          Text('Ke kategori',
                               style: TextStyle(
-                                  fontSize: 11, color: AppTheme.textSecondary)),
+                                  fontSize: 11, color: c.textSecondary)),
                           const SizedBox(height: 6),
                           Row(children: [
                             Text(_selectedCategory?.icon ?? '📦',
-                                style: const TextStyle(fontSize: 18)),
+                                style: TextStyle(fontSize: 18)),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 _selectedCategory?.name ?? 'Pilih',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary),
+                                    color: c.textPrimary),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -434,43 +426,41 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
             ),
           ),
 
-          // ── TANGGAL + CATATAN (pill row) ──
+          // ── TANGGAL + CATATAN ──
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Row(
               children: [
-                // Pill tanggal
                 GestureDetector(
                   onTap: _pickDate,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: AppTheme.bgLight,
+                      color: c.bgLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 13, color: AppTheme.textSecondary),
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: c.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           _isToday(_selectedDate)
                               ? 'Hari ini • ${DateFormat('HH:mm').format(_selectedDate)}'
                               : DateFormat('d MMM • HH:mm', 'id_ID')
                                   .format(_selectedDate),
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: AppTheme.textSecondary),
+                              color: c.textSecondary),
                         ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Pill catatan — buka dialog
                 Expanded(
                   child: GestureDetector(
                     onTap: _showNoteDialog,
@@ -479,12 +469,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                           horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: _noteController.text.trim().isNotEmpty
-                            ? AppTheme.income.withValues(alpha: 0.08)
-                            : AppTheme.bgLight,
+                            ? c.income.withValues(alpha: 0.08)
+                            : c.bgLight,
                         borderRadius: BorderRadius.circular(10),
                         border: _noteController.text.trim().isNotEmpty
                             ? Border.all(
-                                color: AppTheme.income.withValues(alpha: 0.25))
+                                color: c.income.withValues(alpha: 0.25))
                             : null,
                       ),
                       child: Row(
@@ -495,8 +485,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                                 : Icons.edit_note_rounded,
                             size: 14,
                             color: _noteController.text.trim().isNotEmpty
-                                ? AppTheme.income
-                                : AppTheme.textSecondary,
+                                ? c.income
+                                : c.textSecondary,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -508,8 +498,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: _noteController.text.trim().isNotEmpty
-                                    ? AppTheme.textPrimary
-                                    : AppTheme.textSecondary,
+                                    ? c.textPrimary
+                                    : c.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -525,7 +515,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           ),
 
           const SizedBox(height: 10),
-          const Divider(height: 1, color: AppTheme.divider),
+          Divider(height: 1, color: c.divider),
 
           // ── NUMPAD ──
           _buildNumpad(typeColor, hasOp),
@@ -545,11 +535,8 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         .replaceAll(',', '.');
   }
 
-  // ── NUMPAD WIDGET ──
-  // Layout kolom: [op(52) | gap | angka(Expanded) | gap | kanan(64)]
-  // Kolom kanan:  [backspace(1 baris)] + [simpan(3 baris)]
-
   Widget _buildNumpad(Color typeColor, bool hasOp) {
+    final c = context.colors;
     const h = 56.0;
     const gap = 8.0;
     const double sideW = 64.0;
@@ -560,7 +547,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── KOLOM KIRI: 4 operator ──
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -574,33 +560,31 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ],
             ),
             const SizedBox(width: gap),
-
-            // ── KOLOM TENGAH: 4 baris angka ──
             Expanded(
               child: Column(
                 children: [
                   Row(children: [
-                    Expanded(child: _numKeyFull('7', h)),
+                    Expanded(child: _numKey('7', h)),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('8', h)),
+                    Expanded(child: _numKey('8', h)),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('9', h)),
+                    Expanded(child: _numKey('9', h)),
                   ]),
                   const SizedBox(height: gap),
                   Row(children: [
-                    Expanded(child: _numKeyFull('4', h)),
+                    Expanded(child: _numKey('4', h)),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('5', h)),
+                    Expanded(child: _numKey('5', h)),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('6', h)),
+                    Expanded(child: _numKey('6', h)),
                   ]),
                   const SizedBox(height: gap),
                   Row(children: [
-                    Expanded(child: _numKeyFull('1', h)),
+                    Expanded(child: _numKey('1', h)),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('2', h)),
+                    Expanded(child: _numKey('2', h)),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('3', h)),
+                    Expanded(child: _numKey('3', h)),
                   ]),
                   const SizedBox(height: gap),
                   Row(children: [
@@ -610,21 +594,21 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                         child: Container(
                           height: h,
                           decoration: BoxDecoration(
-                            color: AppTheme.bgLight,
+                            color: c.bgLight,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text('C',
                                 style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textSecondary)),
+                                    color: c.textSecondary)),
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: gap),
-                    Expanded(child: _numKeyFull('0', h)),
+                    Expanded(child: _numKey('0', h)),
                     const SizedBox(width: gap),
                     Expanded(
                       child: GestureDetector(
@@ -632,15 +616,15 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                         child: Container(
                           height: h,
                           decoration: BoxDecoration(
-                            color: AppTheme.bgLight,
+                            color: c.bgLight,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text('000',
                                 style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary)),
+                                    color: c.textPrimary)),
                           ),
                         ),
                       ),
@@ -650,31 +634,27 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               ),
             ),
             const SizedBox(width: gap),
-
-            // ── KOLOM KANAN: backspace (baris 1) + simpan (baris 2–4) ──
             SizedBox(
               width: sideW,
               child: Column(
                 children: [
-                  // Backspace — 1 baris
                   SizedBox(
                     height: h,
                     child: GestureDetector(
                       onTap: _onBackspace,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.bgLight,
+                          color: c.bgLight,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Icon(Icons.backspace_outlined,
-                              color: AppTheme.textSecondary, size: 20),
+                              color: c.textSecondary, size: 20),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: gap),
-                  // Simpan — mengisi sisa 3 baris + 2 gap
                   Expanded(
                     child: hasOp
                         ? Column(children: [
@@ -686,12 +666,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                                     color: Colors.orange.shade500,
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Center(
+                                  child: Center(
                                     child: Text('=',
                                         style: TextStyle(
                                             fontSize: 28,
                                             fontWeight: FontWeight.w700,
-                                            color: Colors.white)),
+                                            color: c.cardBg)),
                                   ),
                                 ),
                               ),
@@ -710,29 +690,29 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     );
   }
 
-  // ── KEY BUILDERS ──
-
-  Widget _numKeyFull(String label, double h) {
+  Widget _numKey(String label, double h) {
+    final c = context.colors;
     return GestureDetector(
       onTap: () => _onNumber(label),
       child: Container(
         height: h,
         decoration: BoxDecoration(
-          color: AppTheme.bgLight,
+          color: c.bgLight,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Center(
           child: Text(label,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.textPrimary)),
+                  color: c.textPrimary)),
         ),
       ),
     );
   }
 
   Widget _opKey(String op, double h) {
+    final c = context.colors;
     final isActive = _operation == op && _previousValue != null;
     return SizedBox(
       width: 52,
@@ -752,7 +732,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w500,
-                    color: isActive ? Colors.white : Colors.orange.shade600)),
+                    color: isActive ? c.cardBg : Colors.orange.shade600)),
           ),
         ),
       ),
@@ -760,6 +740,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   Widget _saveButton(Color color) {
+    final c = context.colors;
     return GestureDetector(
       onTap: _onSave,
       child: Container(
@@ -768,17 +749,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           borderRadius: BorderRadius.circular(14),
         ),
         child: Center(
-          child: Icon(
-            _isEditing ? Icons.check_rounded : Icons.check_rounded,
-            color: Colors.white,
-            size: 28,
-          ),
+          child: Icon(Icons.check_rounded, color: c.cardBg, size: 28),
         ),
       ),
     );
   }
 
   Widget _typeTab(String label, TransactionType type, Color color) {
+    final c = context.colors;
     final isSel = _selectedType == type;
     return Expanded(
       child: GestureDetector(
@@ -812,16 +790,15 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isSel ? Colors.white : AppTheme.textSecondary)),
+                    color: isSel ? c.cardBg : c.textSecondary)),
           ),
         ),
       ),
     );
   }
 
-  // ── PICKERS ──
-
   Future<void> _showNoteDialog() async {
+    final c = context.colors;
     final tempCtrl = TextEditingController(text: _noteController.text);
 
     await showModalBottomSheet(
@@ -833,9 +810,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           bottom: MediaQuery.of(ctx).viewInsets.bottom,
         ),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: c.modalBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           child: Column(
@@ -848,16 +825,16 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.divider,
+                    color: c.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const Text('Catatan',
+              Text('Catatan',
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.textPrimary)),
+                      color: c.textPrimary)),
               const SizedBox(height: 12),
               TextField(
                 controller: tempCtrl,
@@ -865,21 +842,18 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 maxLines: 3,
                 minLines: 1,
                 textInputAction: TextInputAction.done,
-                style:
-                    const TextStyle(fontSize: 14, color: AppTheme.textPrimary),
+                style: TextStyle(fontSize: 14, color: c.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Tulis catatan...',
-                  hintStyle: const TextStyle(
-                      fontSize: 14, color: AppTheme.textSecondary),
+                  hintStyle: TextStyle(fontSize: 14, color: c.textSecondary),
                   filled: true,
-                  fillColor: AppTheme.bgLight,
+                  fillColor: c.bgLight,
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(color: AppTheme.accent, width: 1.5)),
+                      borderSide: BorderSide(color: c.accent, width: 1.5)),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
@@ -896,14 +870,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     child: Container(
                       height: 46,
                       decoration: BoxDecoration(
-                          color: AppTheme.bgLight,
+                          color: c.bgLight,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text('Hapus catatan',
                             style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary)),
+                                color: c.textSecondary)),
                       ),
                     ),
                   ),
@@ -915,14 +889,14 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                     child: Container(
                       height: 46,
                       decoration: BoxDecoration(
-                          color: AppTheme.accent,
+                          color: c.accent,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text('Simpan',
                             style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white)),
+                                color: c.cardBg)),
                       ),
                     ),
                   ),
@@ -941,6 +915,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   void _showCategoryPicker() {
+    final c = context.colors;
     final provider = context.read<FinanceProvider>();
     final categories = _selectedType == TransactionType.expense
         ? provider.expenseCategories
@@ -951,9 +926,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         height: MediaQuery.of(context).size.height * 0.6,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: c.modalBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -962,17 +937,16 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: AppTheme.divider,
-                    borderRadius: BorderRadius.circular(2))),
+                    color: c.divider, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
             Text(
               _selectedType == TransactionType.expense
                   ? 'Kategori Pengeluaran'
                   : 'Kategori Pemasukan',
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary),
+                  color: c.textPrimary),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -1005,13 +979,13 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(cat.icon, style: const TextStyle(fontSize: 32)),
+                          Text(cat.icon, style: TextStyle(fontSize: 32)),
                           const SizedBox(height: 8),
                           Text(cat.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.textPrimary),
+                                  color: c.textPrimary),
                               textAlign: TextAlign.center,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
@@ -1029,6 +1003,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   void _showAccountPicker() {
+    final c = context.colors;
     final provider = context.read<FinanceProvider>();
     final accounts = provider.accounts;
 
@@ -1037,9 +1012,9 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         height: MediaQuery.of(context).size.height * 0.5,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: c.modalBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -1048,14 +1023,13 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: AppTheme.divider,
-                    borderRadius: BorderRadius.circular(2))),
+                    color: c.divider, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            const Text('Pilih Akun',
+            Text('Pilih Akun',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
@@ -1075,7 +1049,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       decoration: BoxDecoration(
                         color: isSel
                             ? Color(acc.color).withValues(alpha: 0.1)
-                            : AppTheme.bgLight,
+                            : c.bgLight,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                             color:
@@ -1084,18 +1058,17 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                       ),
                       child: Row(
                         children: [
-                          Text(acc.icon, style: const TextStyle(fontSize: 24)),
+                          Text(acc.icon, style: TextStyle(fontSize: 24)),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(acc.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.textPrimary)),
+                                    color: c.textPrimary)),
                           ),
                           if (acc.isPrimary)
-                            const Icon(Icons.star,
-                                size: 14, color: Colors.amber),
+                            Icon(Icons.star, size: 14, color: Colors.amber),
                           if (isSel) ...[
                             const SizedBox(width: 6),
                             Icon(Icons.check_circle,
@@ -1116,14 +1089,15 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
   }
 
   Future<void> _pickDate() async {
+    final c = context.colors;
     final now = DateTime.now();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: c.modalBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1133,20 +1107,18 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: AppTheme.divider,
-                    borderRadius: BorderRadius.circular(2))),
+                    color: c.divider, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            const Text('Pilih Tanggal',
+            Text('Pilih Tanggal',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: 8),
             Text(
               DateFormat('EEEE, d MMMM yyyy • HH:mm', 'id_ID')
                   .format(_selectedDate),
-              style:
-                  const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              style: TextStyle(fontSize: 13, color: c.textSecondary),
             ),
             const SizedBox(height: 8),
             _dateTile(
@@ -1177,8 +1149,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 lastDate: DateTime.now().add(const Duration(days: 365)),
                 builder: (context, child) => Theme(
                   data: Theme.of(context).copyWith(
-                      colorScheme:
-                          const ColorScheme.light(primary: AppTheme.accent)),
+                      colorScheme: ColorScheme.light(primary: c.accent)),
                   child: child!,
                 ),
               );
@@ -1209,25 +1180,26 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
 
   Widget _dateTile(BuildContext ctx, String title, String subtitle,
       IconData icon, VoidCallback onTap) {
+    final c = context.colors;
     return ListTile(
-      leading: Icon(icon, color: AppTheme.accent),
+      leading: Icon(icon, color: c.accent),
       title: Text(title,
-          style: const TextStyle(
-              fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
+          style: TextStyle(fontWeight: FontWeight.w500, color: c.textPrimary)),
       subtitle: Text(subtitle,
-          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          style: TextStyle(fontSize: 12, color: c.textSecondary)),
       onTap: onTap,
     );
   }
 
   Future<void> _pickTime() async {
+    final c = context.colors;
     final picked = await showTimePicker(
       context: context,
       initialTime:
           TimeOfDay(hour: _selectedDate.hour, minute: _selectedDate.minute),
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppTheme.accent)),
+        data: Theme.of(context)
+            .copyWith(colorScheme: ColorScheme.light(primary: c.accent)),
         child: child!,
       ),
     );

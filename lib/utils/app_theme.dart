@@ -16,7 +16,7 @@ class AppTheme {
   static const Color expense = Color(0xFFFF5C7A);
   static const Color expenseLight = Color(0xFFFFEEF1);
   static const Color surface = Color(0xFFF8F9FF);
-  static const Color cardBg = Colors.white;
+  static const Color cardBg = Color(0xFFFFFFFF);
   static const Color textPrimary = Color(0xFF1A1F36);
   static const Color textSecondary = Color(0xFF8B8FA8);
   static const Color divider = Color(0xFFEEEFF5);
@@ -76,7 +76,7 @@ class AppTheme {
         shadowColor: Colors.black.withValues(alpha: 0.06),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: cardBg,
         selectedItemColor: accent,
         unselectedItemColor: textSecondary,
         elevation: 0,
@@ -109,7 +109,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accent,
-          foregroundColor: Colors.white,
+          foregroundColor: cardBg,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: RoundedRectangleBorder(
@@ -190,7 +190,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: darkAccent,
-          foregroundColor: Colors.white,
+          foregroundColor: cardBg,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
           shape: RoundedRectangleBorder(

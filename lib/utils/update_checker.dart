@@ -1,6 +1,7 @@
 // lib/utils/update_checker.dart
 
 import 'dart:io';
+import 'package:Monetoo/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -217,6 +218,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
   }
 
   void _showError(String msg) {
+    final c = context.colors;
     if (!mounted) return;
     setState(() {
       _isDownloading = false;
@@ -226,7 +228,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppTheme.expense,
+        backgroundColor: c.expense,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -234,9 +236,10 @@ class _UpdateSheetState extends State<_UpdateSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: c.cardBg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
@@ -249,8 +252,7 @@ class _UpdateSheetState extends State<_UpdateSheet> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-                color: AppTheme.divider,
-                borderRadius: BorderRadius.circular(2)),
+                color: c.divider, borderRadius: BorderRadius.circular(2)),
           ),
 
           // Ikon
@@ -258,20 +260,18 @@ class _UpdateSheetState extends State<_UpdateSheet> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-                color: AppTheme.accent.withValues(alpha: 0.1),
-                shape: BoxShape.circle),
-            child: const Icon(Icons.system_update_rounded,
-                color: AppTheme.accent, size: 28),
+                color: c.accent.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(Icons.system_update_rounded, color: c.accent, size: 28),
           ),
           const SizedBox(height: 16),
 
           // Judul
           Text(
             'Update tersedia — v${widget.version}',
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary),
+                color: c.textPrimary),
           ),
           const SizedBox(height: 8),
 
@@ -282,8 +282,8 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                   ? '${widget.changelog.substring(0, 200)}...'
                   : widget.changelog,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
+              style:
+                  TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
             ),
           const SizedBox(height: 20),
 
@@ -294,16 +294,14 @@ class _UpdateSheetState extends State<_UpdateSheet> {
               child: LinearProgressIndicator(
                 value: _progress > 0 ? _progress : null,
                 minHeight: 8,
-                backgroundColor: AppTheme.bgLight,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppTheme.accent),
+                backgroundColor: c.bgLight,
+                valueColor: AlwaysStoppedAnimation<Color>(c.accent),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               _statusText,
-              style:
-                  const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+              style: TextStyle(fontSize: 12, color: c.textSecondary),
             ),
             const SizedBox(height: 16),
           ],
@@ -319,15 +317,15 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.bgLight,
+                          color: c.bgLight,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text(
                           'Nanti',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.textSecondary),
+                              color: c.textSecondary),
                         ),
                       ),
                     ),
@@ -345,31 +343,31 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                     height: 50,
                     decoration: BoxDecoration(
                       color: _isDownloading
-                          ? AppTheme.accent.withValues(alpha: 0.5)
-                          : AppTheme.accent,
+                          ? c.accent.withValues(alpha: 0.5)
+                          : c.accent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
                       child: _isDownloading
-                          ? const Text(
+                          ? Text(
                               'Mengunduh...',
                               style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white),
+                                  color: c.cardBg),
                             )
-                          : const Row(
+                          :  Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.download_rounded,
-                                    color: Colors.white, size: 20),
+                                    color: c.cardBg, size: 20),
                                 SizedBox(width: 8),
                                 Text(
                                   'Download & Install',
                                   style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white),
+                                      color: c.cardBg),
                                 ),
                               ],
                             ),

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/update_checker.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -37,31 +37,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── HEADER ──
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
                 'Pengaturan',
                 style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary),
+                    color: c.textPrimary),
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── SECTION: Tampilan ──
                     _sectionLabel('Tampilan'),
                     _card(children: [
                       Consumer<ThemeProvider>(
@@ -75,58 +73,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                       ),
                     ]),
-
                     const SizedBox(height: 20),
-
-                    // ── SECTION: Tentang Aplikasi ──
                     _sectionLabel('Tentang Aplikasi'),
                     _card(children: [
                       _infoTile(
-                        icon: Icons.apps_rounded,
-                        label: 'Aplikasi',
-                        value: 'Monetoo',
-                      ),
+                          icon: Icons.apps_rounded,
+                          label: 'Aplikasi',
+                          value: 'Monetoo'),
                       _dividerThin(),
                       _infoTile(
-                        icon: Icons.tag_rounded,
-                        label: 'Versi',
-                        value: _version.isEmpty ? '...' : 'v$_version',
-                      ),
+                          icon: Icons.tag_rounded,
+                          label: 'Versi',
+                          value: _version.isEmpty ? '...' : 'v$_version'),
                     ]),
-
                     const SizedBox(height: 20),
-
-                    // ── SECTION: Pembaruan ──
                     _sectionLabel('Pembaruan'),
                     _card(children: [
                       _actionTile(
                         icon: Icons.system_update_rounded,
-                        iconColor: AppTheme.accent,
+                        iconColor: c.accent,
                         label: 'Periksa Pembaruan',
                         subtitle: 'Cek versi terbaru dari GitHub',
                         trailing: _checkingUpdate
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppTheme.accent,
-                                ),
+                                    strokeWidth: 2, color: c.accent),
                               )
-                            : const Icon(Icons.chevron_right_rounded,
-                                color: AppTheme.textSecondary, size: 20),
+                            : Icon(Icons.chevron_right_rounded,
+                                color: c.textSecondary, size: 20),
                         onTap: _checkingUpdate ? null : _checkUpdate,
                       ),
                     ]),
-
                     const SizedBox(height: 32),
-
-                    // Versi kecil di bawah
                     Center(
                       child: Text(
                         _version.isEmpty ? '' : 'Monetoo v$_version',
-                        style: const TextStyle(
-                            fontSize: 12, color: AppTheme.textSecondary),
+                        style: TextStyle(fontSize: 12, color: c.textSecondary),
                       ),
                     ),
                   ],
@@ -139,36 +123,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ── HELPER WIDGETS ──
-
   Widget _sectionLabel(String label) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         label.toUpperCase(),
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: AppTheme.textSecondary,
+            color: c.textSecondary,
             letterSpacing: 0.8),
       ),
     );
   }
 
   Widget _card({required List<Widget> children}) {
+    final c = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: c.cardBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: c.cardShadow,
       ),
       child: Column(children: children),
     );
   }
 
   Widget _dividerThin() {
-    return const Divider(
-        height: 1, indent: 52, endIndent: 0, color: AppTheme.divider);
+    final c = context.colors;
+    return Divider(height: 1, indent: 52, endIndent: 0, color: c.divider);
   }
 
   Widget _infoTile({
@@ -176,6 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String label,
     required String value,
   }) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -184,20 +169,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppTheme.bgLight,
+              color: c.bgLight,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 16, color: AppTheme.textSecondary),
+            child: Icon(icon, size: 16, color: c.textSecondary),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(label,
-                style:
-                    const TextStyle(fontSize: 14, color: AppTheme.textPrimary)),
+                style: TextStyle(fontSize: 14, color: c.textPrimary)),
           ),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+          Text(value, style: TextStyle(fontSize: 14, color: c.textSecondary)),
         ],
       ),
     );
@@ -211,6 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required Widget trailing,
     VoidCallback? onTap,
   }) {
+    final c = context.colors;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -233,14 +216,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.textPrimary)),
+                          color: c.textPrimary)),
                   const SizedBox(height: 2),
                   Text(subtitle,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppTheme.textSecondary)),
+                      style: TextStyle(fontSize: 12, color: c.textSecondary)),
                 ],
               ),
             ),
@@ -255,6 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool isDarkMode,
     required Function(bool) onToggle,
   }) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -264,25 +247,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Icon(
                 isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                color: AppTheme.accent,
+                color: c.accent,
                 size: 20,
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Mode Gelap',
                     style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.textPrimary),
+                        color: c.textPrimary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     isDarkMode ? 'Aktif' : 'Nonaktif',
-                    style: const TextStyle(
-                        fontSize: 12, color: AppTheme.textSecondary),
+                    style: TextStyle(fontSize: 12, color: c.textSecondary),
                   ),
                 ],
               ),
@@ -291,8 +273,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch(
             value: isDarkMode,
             onChanged: onToggle,
-            activeThumbColor: Colors.white,
-            activeTrackColor: AppTheme.accent,
+            activeThumbColor: c.cardBg,
+            activeTrackColor: c.accent,
           ),
         ],
       ),

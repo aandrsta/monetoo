@@ -1,11 +1,12 @@
 // lib/screens/statistics_screen.dart
 
+import 'package:Monetoo/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
 import '../providers/finance_provider.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
@@ -52,6 +53,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _pickMonth(BuildContext context) async {
+    final c = context.colors;
     int pickedYear = _selectedMonth.year;
     int pickedMonth = _selectedMonth.month;
 
@@ -61,7 +63,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         builder: (ctx, setD) => AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Pilih Bulan',
+          title: Text('Pilih Bulan',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
           content: SizedBox(
             width: 280,
@@ -73,14 +75,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   children: [
                     IconButton(
                       onPressed: () => setD(() => pickedYear--),
-                      icon: const Icon(Icons.chevron_left_rounded),
+                      icon: Icon(Icons.chevron_left_rounded),
                     ),
                     Text('$pickedYear',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600)),
                     IconButton(
                       onPressed: () => setD(() => pickedYear++),
-                      icon: const Icon(Icons.chevron_right_rounded),
+                      icon: Icon(Icons.chevron_right_rounded),
                     ),
                   ],
                 ),
@@ -116,8 +118,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       onTap: () => setD(() => pickedMonth = m),
                       child: Container(
                         decoration: BoxDecoration(
-                          color:
-                              isSelected ? AppTheme.accent : AppTheme.bgLight,
+                          color: isSelected ? c.accent : c.bgLight,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
@@ -125,9 +126,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppTheme.textSecondary,
+                                color: isSelected ? c.cardBg : c.textSecondary,
                               )),
                         ),
                       ),
@@ -140,8 +139,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Batal',
-                  style: TextStyle(color: AppTheme.textSecondary)),
+              child: Text('Batal', style: TextStyle(color: c.textSecondary)),
             ),
             TextButton(
               onPressed: () {
@@ -150,8 +148,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 });
                 Navigator.pop(ctx);
               },
-              child:
-                  const Text('Pilih', style: TextStyle(color: AppTheme.accent)),
+              child: Text('Pilih', style: TextStyle(color: c.accent)),
             ),
           ],
         ),
@@ -161,8 +158,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
@@ -216,17 +214,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildHeader() {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+    final c = context.colors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Text('Statistik',
           style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary)),
+              fontSize: 24, fontWeight: FontWeight.w700, color: c.textPrimary)),
     );
   }
 
   Widget _buildMonthSelector(BuildContext context) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
@@ -234,8 +232,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         children: [
           IconButton(
             onPressed: () => _changeMonth(-1),
-            icon: const Icon(Icons.chevron_left_rounded,
-                color: AppTheme.textPrimary),
+            icon: Icon(Icons.chevron_left_rounded, color: c.textPrimary),
           ),
           GestureDetector(
             onTap: () => _pickMonth(context),
@@ -244,21 +241,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               children: [
                 Text(
                   DateFormatter.formatMonthYear(_selectedMonth),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary),
+                      color: c.textPrimary),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.keyboard_arrow_down_rounded,
-                    size: 18, color: AppTheme.textSecondary),
+                Icon(Icons.keyboard_arrow_down_rounded,
+                    size: 18, color: c.textSecondary),
               ],
             ),
           ),
           IconButton(
             onPressed: () => _changeMonth(1),
-            icon: const Icon(Icons.chevron_right_rounded,
-                color: AppTheme.textPrimary),
+            icon: Icon(Icons.chevron_right_rounded, color: c.textPrimary),
           ),
         ],
       ),
@@ -266,6 +262,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildMonthlyOverview(List<TransactionModel> txs) {
+    final c = context.colors;
     final income = txs
         .where((t) => t.type == TransactionType.income)
         .fold<double>(0, (s, t) => s + t.amount);
@@ -279,43 +276,41 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: c.cardBg,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.cardShadow),
+            boxShadow: c.cardShadow),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Ringkasan Bulanan',
-                style: TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+            Text('Ringkasan Bulanan',
+                style: TextStyle(fontSize: 14, color: c.textSecondary)),
             const SizedBox(height: 2),
             Text(DateFormatter.formatMonthYear(_selectedMonth),
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: 16),
             Row(children: [
               Expanded(
                   child: _statCard('Pemasukan', income,
-                      Icons.arrow_downward_rounded, AppTheme.income)),
+                      Icons.arrow_downward_rounded, c.income)),
               const SizedBox(width: 12),
               Expanded(
                   child: _statCard('Pengeluaran', expense,
-                      Icons.arrow_upward_rounded, AppTheme.expense)),
+                      Icons.arrow_upward_rounded, c.expense)),
             ]),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Saldo Akhir',
-                    style:
-                        TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+                Text('Saldo Akhir',
+                    style: TextStyle(fontSize: 14, color: c.textSecondary)),
                 Text(CurrencyFormatter.format(balance),
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color:
-                            balance >= 0 ? AppTheme.income : AppTheme.expense)),
+                        color: balance >= 0 ? c.income : c.expense)),
               ],
             ),
           ],
@@ -325,6 +320,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _statCard(String label, double amount, IconData icon, Color color) {
+    final c = context.colors;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -344,6 +340,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   // ── DAILY CHART — tab slide pemasukan/pengeluaran ──
   Widget _buildDailyChart(List<TransactionModel> txs) {
+    final c = context.colors;
     final totalDays =
         DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
     final dailyIncome = List<double>.filled(totalDays, 0);
@@ -371,9 +368,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: c.cardBg,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.cardShadow),
+            boxShadow: c.cardShadow),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -387,11 +384,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Harian',
+                        Text('Harian',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textPrimary)),
+                                color: c.textPrimary)),
                         const SizedBox(height: 2),
                         Row(
                           children: [
@@ -400,9 +397,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   ? Icons.today_rounded
                                   : Icons.calendar_month_rounded,
                               size: 12,
-                              color: _isCurrentMonth
-                                  ? AppTheme.accent
-                                  : AppTheme.textSecondary,
+                              color:
+                                  _isCurrentMonth ? c.accent : c.textSecondary,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -410,8 +406,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 color: _isCurrentMonth
-                                    ? AppTheme.accent
-                                    : AppTheme.textSecondary,
+                                    ? c.accent
+                                    : c.textSecondary,
                               ),
                             ),
                           ],
@@ -431,13 +427,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: Container(
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppTheme.bgLight,
+                  color: c.bgLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    _chartTabItem(0, 'Pengeluaran', AppTheme.expense),
-                    _chartTabItem(1, 'Pemasukan', AppTheme.income),
+                    _chartTabItem(0, 'Pengeluaran', c.expense),
+                    _chartTabItem(1, 'Pemasukan', c.income),
                   ],
                 ),
               ),
@@ -455,7 +451,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   // Halaman 0: Pengeluaran
                   _chartPage(
                     data: dailyExpense,
-                    color: AppTheme.expense,
+                    color: c.expense,
                     totalDays: totalDays,
                     todayIdx: todayIdx,
                     label: 'Pengeluaran',
@@ -463,7 +459,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   // Halaman 1: Pemasukan
                   _chartPage(
                     data: dailyIncome,
-                    color: AppTheme.income,
+                    color: c.income,
                     totalDays: totalDays,
                     todayIdx: todayIdx,
                     label: 'Pemasukan',
@@ -491,6 +487,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _chartTabItem(int index, String label, Color color) {
+    final c = context.colors;
     final isSelected = _chartTab == index;
     return Expanded(
       child: GestureDetector(
@@ -523,7 +520,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppTheme.textSecondary,
+                color: isSelected ? c.cardBg : c.textSecondary,
               ),
             ),
           ),
@@ -533,14 +530,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _dot(int index) {
+    final c = context.colors;
     final isSelected = _chartTab == index;
-    final color = index == 0 ? AppTheme.expense : AppTheme.income;
+    final color = index == 0 ? c.expense : c.income;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: isSelected ? 18 : 6,
       height: 6,
       decoration: BoxDecoration(
-        color: isSelected ? color : AppTheme.divider,
+        color: isSelected ? color : c.divider,
         borderRadius: BorderRadius.circular(3),
       ),
     );
@@ -553,6 +551,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     required int todayIdx,
     required String label,
   }) {
+    final c = context.colors;
     final maxVal = data.fold<double>(0, (m, v) => v > m ? v : m);
     final maxY = (maxVal * 1.25).clamp(1, double.infinity).toDouble();
     final total = data.fold<double>(0, (s, v) => s + v);
@@ -571,10 +570,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 _miniStat(
                     'Total', CurrencyFormatter.formatCompact(total), color),
                 const SizedBox(width: 16),
-                _miniStat(
-                    'Rata-rata/hari',
-                    CurrencyFormatter.formatCompact(avg),
-                    AppTheme.textSecondary),
+                _miniStat('Rata-rata/hari',
+                    CurrencyFormatter.formatCompact(avg), c.textSecondary),
               ],
             ),
           ),
@@ -596,8 +593,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     final isToday = todayIdx == group.x;
                     return BarTooltipItem(
                       '${isToday ? 'Hari ini' : 'Tgl $day'}\n$label\n${CurrencyFormatter.format(rod.toY)}',
-                      const TextStyle(
-                          color: Colors.white,
+                      TextStyle(
+                          color: c.cardBg,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           height: 1.35),
@@ -609,7 +606,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (_) =>
-                      const FlLine(color: AppTheme.divider, strokeWidth: 1)),
+                      FlLine(color: c.divider, strokeWidth: 1)),
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
                 leftTitles:
@@ -637,7 +634,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           fontSize: isToday ? 10 : 10,
                           fontWeight:
                               isToday ? FontWeight.w700 : FontWeight.w400,
-                          color: isToday ? color : AppTheme.textSecondary,
+                          color: isToday ? color : c.textSecondary,
                         ),
                       );
                     },
@@ -669,12 +666,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _miniStat(String label, String value, Color color) {
+    final c = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style:
-                const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 10, color: c.textSecondary)),
         Text(value,
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: color)),
@@ -691,6 +687,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     required String emptyLabel,
     required Map<String, Color> categoryColorMap,
   }) {
+    final c = context.colors;
     final Map<String, _CatData> map = {};
     for (final t in transactions) {
       if (t.type != type) continue;
@@ -718,16 +715,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ..sort((a, b) => b.amount.compareTo(a.amount));
     final total = categories.fold<double>(0, (s, c) => s + c.amount);
     final isExpense = type == TransactionType.expense;
-    final accentColor = isExpense ? AppTheme.expense : AppTheme.income;
+    final accentColor = isExpense ? c.expense : c.income;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-            color: Colors.white,
+            color: c.cardBg,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: AppTheme.cardShadow),
+            boxShadow: c.cardShadow),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -735,10 +732,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(title,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary)),
+                        color: c.textPrimary)),
                 Text(CurrencyFormatter.formatCompact(total),
                     style: TextStyle(
                         fontSize: 14,
@@ -752,8 +749,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Text(emptyLabel,
-                      style: const TextStyle(
-                          fontSize: 13, color: AppTheme.textSecondary)),
+                      style: TextStyle(fontSize: 13, color: c.textSecondary)),
                 ),
               )
             else ...[
@@ -783,10 +779,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           color: cat.color,
                           radius: isTouched ? 56 : 48,
                           title: pct >= 8 ? '${pct.toStringAsFixed(0)}%' : '',
-                          titleStyle: const TextStyle(
+                          titleStyle: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white),
+                              color: c.cardBg),
                           titlePositionPercentageOffset: 0.65,
                         );
                       }).toList(),
@@ -829,8 +825,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     style: TextStyle(
                                         fontSize: 11,
                                         color: isTouched
-                                            ? AppTheme.textPrimary
-                                            : AppTheme.textSecondary,
+                                            ? c.textPrimary
+                                            : c.textSecondary,
                                         fontWeight: isTouched
                                             ? FontWeight.w600
                                             : FontWeight.w400),
@@ -850,7 +846,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              const Divider(color: AppTheme.divider, height: 1),
+              Divider(color: c.divider, height: 1),
               const SizedBox(height: 16),
               ...categories.map((cat) {
                 final pct = total == 0 ? 0.0 : cat.amount / total;
@@ -874,7 +870,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               borderRadius: BorderRadius.circular(10)),
                           child: Center(
                               child: Text(cat.icon,
-                                  style: const TextStyle(fontSize: 19))),
+                                  style: TextStyle(fontSize: 19))),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -886,20 +882,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   child: Text(cat.name,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
-                                          color: AppTheme.textPrimary)),
+                                          color: c.textPrimary)),
                                 ),
                                 const SizedBox(width: 8),
                                 Text(CurrencyFormatter.format(cat.amount),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: AppTheme.textPrimary)),
+                                        color: c.textPrimary)),
                                 const SizedBox(width: 4),
-                                const Icon(Icons.chevron_right_rounded,
-                                    size: 16, color: AppTheme.textSecondary),
+                                Icon(Icons.chevron_right_rounded,
+                                    size: 16, color: c.textSecondary),
                               ]),
                               const SizedBox(height: 6),
                               ClipRRect(
@@ -909,7 +905,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   minHeight: 6,
                                   valueColor:
                                       AlwaysStoppedAnimation<Color>(cat.color),
-                                  backgroundColor: AppTheme.divider,
+                                  backgroundColor: c.divider,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -918,13 +914,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text('${catTxs.length} transaksi',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 11,
-                                          color: AppTheme.textSecondary)),
+                                          color: c.textSecondary)),
                                   Text('${(pct * 100).toStringAsFixed(0)}%',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 11,
-                                          color: AppTheme.textSecondary)),
+                                          color: c.textSecondary)),
                                 ],
                               ),
                             ],
@@ -1006,6 +1002,7 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final txs = _sorted;
     final total = txs.fold<double>(0, (s, t) => s + t.amount);
     final avg = txs.isEmpty ? 0.0 : total / txs.length;
@@ -1016,12 +1013,12 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
     final color = widget.cat.color;
 
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       body: SafeArea(
         child: Column(
           children: [
             Container(
-              color: Colors.white,
+              color: c.cardBg,
               padding: const EdgeInsets.fromLTRB(8, 12, 16, 16),
               child: Column(
                 children: [
@@ -1029,8 +1026,8 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                            size: 20, color: AppTheme.textPrimary),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded,
+                            size: 20, color: c.textPrimary),
                       ),
                       Container(
                         width: 36,
@@ -1040,7 +1037,7 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
                             borderRadius: BorderRadius.circular(10)),
                         child: Center(
                             child: Text(widget.cat.icon,
-                                style: const TextStyle(fontSize: 18))),
+                                style: TextStyle(fontSize: 18))),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -1048,14 +1045,13 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(widget.cat.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.textPrimary)),
+                                    color: c.textPrimary)),
                             Text(DateFormatter.formatMonthYear(widget.month),
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppTheme.textSecondary)),
+                                style: TextStyle(
+                                    fontSize: 12, color: c.textSecondary)),
                           ],
                         ),
                       ),
@@ -1063,31 +1059,27 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: isExpense
-                                  ? AppTheme.expense
-                                  : AppTheme.income)),
+                              color: isExpense ? c.expense : c.income)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      _miniStat('${txs.length} transaksi', 'Total',
-                          AppTheme.textPrimary),
+                      _miniStat(
+                          '${txs.length} transaksi', 'Total', c.textPrimary),
                       _statDivider(),
                       _miniStat(CurrencyFormatter.formatCompact(avg),
                           'Rata-rata', color),
                       _statDivider(),
-                      _miniStat(
-                          CurrencyFormatter.formatCompact(maxTx),
-                          'Terbesar',
-                          isExpense ? AppTheme.expense : AppTheme.income),
+                      _miniStat(CurrencyFormatter.formatCompact(maxTx),
+                          'Terbesar', isExpense ? c.expense : c.income),
                     ],
                   ),
                 ],
               ),
             ),
             Container(
-              color: Colors.white,
+              color: c.cardBg,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -1104,13 +1096,13 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
                 ),
               ),
             ),
-            Container(height: 1, color: AppTheme.divider),
+            Container(height: 1, color: c.divider),
             Expanded(
               child: txs.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('Belum ada transaksi',
-                          style: TextStyle(
-                              fontSize: 14, color: AppTheme.textSecondary)))
+                          style:
+                              TextStyle(fontSize: 14, color: c.textSecondary)))
                   : Consumer<FinanceProvider>(
                       builder: (context, provider, _) => ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -1147,6 +1139,7 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
   }
 
   Widget _miniStat(String value, String label, Color color) {
+    final c = context.colors;
     return Expanded(
       child: Column(children: [
         Text(value,
@@ -1155,9 +1148,7 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis),
         const SizedBox(height: 2),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 11, color: c.textSecondary)),
       ]),
     );
   }
@@ -1169,13 +1160,14 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 4));
 
   Widget _sortChip(String label, String value, Color color) {
+    final c = context.colors;
     final isSelected = _sort == value;
     return GestureDetector(
       onTap: () => setState(() => _sort = value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : AppTheme.bgLight,
+          color: isSelected ? color : c.bgLight,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -1183,7 +1175,7 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : AppTheme.textSecondary,
+            color: isSelected ? c.cardBg : c.textSecondary,
           ),
         ),
       ),

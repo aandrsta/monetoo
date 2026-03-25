@@ -1,5 +1,6 @@
 // lib/screens/report_screen.dart
 
+import 'package:Monetoo/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -21,10 +22,11 @@ class _ReportScreenState extends State<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Laporan Keuangan',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -83,6 +85,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildMonthSelector() {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
@@ -93,15 +96,14 @@ class _ReportScreenState extends State<ReportScreen> {
               _selectedMonth =
                   DateTime(_selectedMonth.year, _selectedMonth.month - 1);
             }),
-            icon: const Icon(Icons.chevron_left_rounded,
-                color: AppTheme.textPrimary),
+            icon: Icon(Icons.chevron_left_rounded, color: c.textPrimary),
           ),
           Text(
             DateFormatter.formatMonthYear(_selectedMonth),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppTheme.textPrimary,
+              color: c.textPrimary,
             ),
           ),
           IconButton(
@@ -116,8 +118,8 @@ class _ReportScreenState extends State<ReportScreen> {
               Icons.chevron_right_rounded,
               color: _selectedMonth.month == DateTime.now().month &&
                       _selectedMonth.year == DateTime.now().year
-                  ? AppTheme.divider
-                  : AppTheme.textPrimary,
+                  ? c.divider
+                  : c.textPrimary,
             ),
           ),
         ],
@@ -126,8 +128,9 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildSummarySection(double income, double expense) {
+    final c = context.colors;
     final balance = income - expense;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -148,17 +151,17 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   'Saldo Bulan Ini',
-                  style: TextStyle(fontSize: 13, color: Colors.white60),
+                  style: TextStyle(fontSize: 13, color: c.cardBg),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   CurrencyFormatter.format(balance),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: c.cardBg,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -166,7 +169,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: c.cardBg.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
@@ -174,13 +177,13 @@ class _ReportScreenState extends State<ReportScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _summaryItem('Total Masuk', income,
-                          AppTheme.income, Icons.arrow_downward_rounded),
+                      child: _summaryItem('Total Masuk', income, c.income,
+                          Icons.arrow_downward_rounded),
                     ),
-                    Container(width: 1, height: 40, color: Colors.white24),
+                    Container(width: 1, height: 40, color: c.cardBg),
                     Expanded(
-                      child: _summaryItem('Total Keluar', expense,
-                          AppTheme.expense, Icons.arrow_upward_rounded),
+                      child: _summaryItem('Total Keluar', expense, c.expense,
+                          Icons.arrow_upward_rounded),
                     ),
                   ],
                 ),
@@ -193,16 +196,16 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: c.cardBg,
                 borderRadius: BorderRadius.circular(14),
-                boxShadow: AppTheme.cardShadow,
+                boxShadow: c.cardShadow,
               ),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Penggunaan Anggaran',
+                      Text('Penggunaan Anggaran',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w500)),
                       Text(
@@ -210,9 +213,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: expense / income > 0.9
-                              ? AppTheme.expense
-                              : AppTheme.accent,
+                          color: expense / income > 0.9 ? c.expense : c.accent,
                         ),
                       ),
                     ],
@@ -222,11 +223,9 @@ class _ReportScreenState extends State<ReportScreen> {
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: (expense / income).clamp(0, 1),
-                      backgroundColor: AppTheme.bgLight,
+                      backgroundColor: c.bgLight,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        expense / income > 0.9
-                            ? AppTheme.expense
-                            : AppTheme.accent,
+                        expense / income > 0.9 ? c.expense : c.accent,
                       ),
                       minHeight: 8,
                     ),
@@ -241,18 +240,18 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _summaryItem(String label, double amount, Color color, IconData icon) {
+    final c = context.colors;
     return Column(
       children: [
         Icon(icon, color: color, size: 18),
         const SizedBox(height: 4),
-        Text(label,
-            style: const TextStyle(fontSize: 11, color: Colors.white60)),
+        Text(label, style: TextStyle(fontSize: 11, color: c.cardBg)),
         Text(
           CurrencyFormatter.formatCompact(amount),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: c.cardBg,
           ),
         ),
       ],
@@ -260,6 +259,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildBarChart(List<Map<String, dynamic>> data) {
+    final c = context.colors;
     if (data.isEmpty) return const SizedBox.shrink();
 
     return Padding(
@@ -267,26 +267,26 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.cardBg,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: AppTheme.cardShadow,
+          boxShadow: c.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Tren Harian',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary),
+                  color: c.textPrimary),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                _legendDot(AppTheme.income, 'Masuk'),
+                _legendDot(c.income, 'Masuk'),
                 const SizedBox(width: 16),
-                _legendDot(AppTheme.expense, 'Keluar'),
+                _legendDot(c.expense, 'Keluar'),
               ],
             ),
             const SizedBox(height: 16),
@@ -309,14 +309,14 @@ class _ReportScreenState extends State<ReportScreen> {
                       barRods: [
                         BarChartRodData(
                           toY: (d['income'] as double),
-                          color: AppTheme.income,
+                          color: c.income,
                           width: 6,
                           borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(3)),
                         ),
                         BarChartRodData(
                           toY: (d['expense'] as double),
-                          color: AppTheme.expense,
+                          color: c.expense,
                           width: 6,
                           borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(3)),
@@ -343,9 +343,9 @@ class _ReportScreenState extends State<ReportScreen> {
                           final parts = dateStr.split('-');
                           return Text(
                             parts[2],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 9,
-                              color: AppTheme.textSecondary,
+                              color: c.textSecondary,
                             ),
                           );
                         },
@@ -354,8 +354,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                   gridData: FlGridData(
                     show: true,
-                    getDrawingHorizontalLine: (value) => const FlLine(
-                      color: AppTheme.divider,
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: c.divider,
                       strokeWidth: 1,
                     ),
                     drawVerticalLine: false,
@@ -371,6 +371,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _legendDot(Color color, String label) {
+    final c = context.colors;
     return Row(
       children: [
         Container(
@@ -378,14 +379,13 @@ class _ReportScreenState extends State<ReportScreen> {
             height: 8,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 4),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 11, color: c.textSecondary)),
       ],
     );
   }
 
   Widget _buildCategoryPieChart(Map<String, double> data) {
+    final c = context.colors;
     if (data.isEmpty) return const SizedBox.shrink();
 
     final total = data.values.fold(0.0, (a, b) => a + b);
@@ -393,9 +393,9 @@ class _ReportScreenState extends State<ReportScreen> {
       ..sort((a, b) => b.value.compareTo(a.value));
 
     final colors = [
-      AppTheme.expense,
-      AppTheme.accent,
-      AppTheme.income,
+      c.expense,
+      c.accent,
+      c.income,
       const Color(0xFFFFBE0B),
       const Color(0xFF4ECDC4),
       const Color(0xFF45B7D1),
@@ -408,19 +408,19 @@ class _ReportScreenState extends State<ReportScreen> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.cardBg,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: AppTheme.cardShadow,
+          boxShadow: c.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Pengeluaran per Kategori',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary),
+                  color: c.textPrimary),
             ),
             const SizedBox(height: 20),
             Row(
@@ -452,10 +452,10 @@ class _ReportScreenState extends State<ReportScreen> {
                           radius: isTouched ? 50 : 42,
                           title:
                               isTouched ? '${percent.toStringAsFixed(1)}%' : '',
-                          titleStyle: const TextStyle(
+                          titleStyle: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: c.cardBg,
                           ),
                         );
                       }).toList(),
@@ -485,8 +485,8 @@ class _ReportScreenState extends State<ReportScreen> {
                             Expanded(
                               child: Text(
                                 e.key,
-                                style: const TextStyle(
-                                    fontSize: 11, color: AppTheme.textPrimary),
+                                style: TextStyle(
+                                    fontSize: 11, color: c.textPrimary),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -513,24 +513,25 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildDailyReport(FinanceProvider provider) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.cardBg,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: AppTheme.cardShadow,
+          boxShadow: c.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Laporan Harian',
               style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary),
+                  color: c.textPrimary),
             ),
             const SizedBox(height: 16),
             FutureBuilder<List<TransactionModel>>(
@@ -553,13 +554,12 @@ class _ReportScreenState extends State<ReportScreen> {
                   ..sort((a, b) => b.compareTo(a));
 
                 if (sortedKeys.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
                       padding: EdgeInsets.all(16),
                       child: Text(
                         'Tidak ada data untuk bulan ini',
-                        style: TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13),
+                        style: TextStyle(color: c.textSecondary, fontSize: 13),
                       ),
                     ),
                   );
@@ -580,7 +580,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.bgLight,
+                        color: c.bgLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -589,7 +589,7 @@ class _ReportScreenState extends State<ReportScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: c.cardBg,
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Column(
@@ -597,18 +597,17 @@ class _ReportScreenState extends State<ReportScreen> {
                               children: [
                                 Text(
                                   date.day.toString(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.textPrimary,
+                                    color: c.textPrimary,
                                     height: 1,
                                   ),
                                 ),
                                 Text(
                                   DateFormatter.formatShort(date).split(' ')[1],
-                                  style: const TextStyle(
-                                      fontSize: 10,
-                                      color: AppTheme.textSecondary),
+                                  style: TextStyle(
+                                      fontSize: 10, color: c.textSecondary),
                                 ),
                               ],
                             ),
@@ -620,9 +619,9 @@ class _ReportScreenState extends State<ReportScreen> {
                               children: [
                                 Text(
                                   '${dayTransactions.length} transaksi',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: AppTheme.textSecondary,
+                                    color: c.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -632,8 +631,8 @@ class _ReportScreenState extends State<ReportScreen> {
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: income - expense >= 0
-                                        ? AppTheme.income
-                                        : AppTheme.expense,
+                                        ? c.income
+                                        : c.expense,
                                   ),
                                 ),
                               ],
@@ -645,14 +644,14 @@ class _ReportScreenState extends State<ReportScreen> {
                               if (income > 0)
                                 Text(
                                   '+${CurrencyFormatter.formatCompact(income)}',
-                                  style: const TextStyle(
-                                      fontSize: 11, color: AppTheme.income),
+                                  style:
+                                      TextStyle(fontSize: 11, color: c.income),
                                 ),
                               if (expense > 0)
                                 Text(
                                   '-${CurrencyFormatter.formatCompact(expense)}',
-                                  style: const TextStyle(
-                                      fontSize: 11, color: AppTheme.expense),
+                                  style:
+                                      TextStyle(fontSize: 11, color: c.expense),
                                 ),
                             ],
                           ),

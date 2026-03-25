@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../providers/finance_provider.dart';
 import '../models/account_model.dart';
 import '../models/transaction_model.dart';
-import '../utils/app_theme.dart';
+import '../utils/app_colors.dart';
 import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
@@ -24,8 +24,9 @@ class _AccountScreenState extends State<AccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
@@ -42,24 +43,21 @@ class _AccountScreenState extends State<AccountScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Saldo keseluruhan',
+                              Text('Saldo keseluruhan',
                                   style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppTheme.textSecondary)),
+                                      fontSize: 14, color: c.textSecondary)),
                               const SizedBox(height: 4),
                               Text(
                                 CurrencyFormatter.format(balance),
                                 style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w700,
-                                  color: balance >= 0
-                                      ? AppTheme.textPrimary
-                                      : AppTheme.expense,
+                                  color:
+                                      balance >= 0 ? c.textPrimary : c.expense,
                                 ),
                               ),
                             ],
                           ),
-                          // Tombol pensil
                           GestureDetector(
                             onTap: () {
                               setState(() => _editMode = !_editMode);
@@ -73,16 +71,15 @@ class _AccountScreenState extends State<AccountScreen> {
                               height: 44,
                               decoration: BoxDecoration(
                                 color: _editMode
-                                    ? AppTheme.accent
-                                    : AppTheme.accent.withValues(alpha: 0.1),
+                                    ? c.accent
+                                    : c.accent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
                                 _editMode
                                     ? Icons.edit_rounded
                                     : Icons.edit_outlined,
-                                color:
-                                    _editMode ? Colors.white : AppTheme.accent,
+                                color: _editMode ? c.cardBg : c.accent,
                                 size: 20,
                               ),
                             ),
@@ -95,24 +92,22 @@ class _AccountScreenState extends State<AccountScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppTheme.accent.withValues(alpha: 0.08),
+                            color: c.accent.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: AppTheme.accent.withValues(alpha: 0.2)),
+                                color: c.accent.withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             children: [
                               Icon(Icons.info_outline_rounded,
                                   size: 16,
-                                  color:
-                                      AppTheme.accent.withValues(alpha: 0.8)),
+                                  color: c.accent.withValues(alpha: 0.8)),
                               const SizedBox(width: 8),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Mode edit aktif — ketuk akun untuk ubah atau hapus',
                                   style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppTheme.textSecondary),
+                                      fontSize: 12, color: c.textSecondary),
                                 ),
                               ),
                             ],
@@ -132,10 +127,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   double _getAccountBalance(FinanceProvider provider, String accountId) {
-    // Get account from provider
     final account = provider.accounts.firstWhere((a) => a.id == accountId);
-
-    // Get transactions for this account
     final txs = provider.transactions.where((t) => t.accountId == accountId);
     final income = txs
         .where((t) => t.type == TransactionType.income)
@@ -143,13 +135,11 @@ class _AccountScreenState extends State<AccountScreen> {
     final expense = txs
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (s, t) => s + t.amount);
-
-    // Balance = Opening Balance + Income - Expense
     return account.openingBalance + income - expense;
   }
 
   Widget _buildAccountsTab(FinanceProvider provider) {
-    // Semua akun (tanpa filter tabungan)
+    final c = context.colors;
     final accounts = provider.accounts;
     final totalBal =
         accounts.fold(0.0, (s, a) => s + _getAccountBalance(provider, a.id));
@@ -162,17 +152,17 @@ class _AccountScreenState extends State<AccountScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Akun',
+              Text('Akun',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary)),
+                      color: c.textPrimary)),
               Text(
                 CurrencyFormatter.format(totalBal),
                 style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: totalBal >= 0 ? AppTheme.income : AppTheme.expense),
+                    color: totalBal >= 0 ? c.income : c.expense),
               ),
             ],
           ),
@@ -188,6 +178,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Widget _buildAccountCard(AccountModel account, FinanceProvider provider) {
+    final c = context.colors;
     final bal = _getAccountBalance(provider, account.id);
     final txCount =
         provider.transactions.where((t) => t.accountId == account.id).length;
@@ -212,7 +203,7 @@ class _AccountScreenState extends State<AccountScreen> {
         decoration: BoxDecoration(
           color: _editMode
               ? Color(account.color).withValues(alpha: 0.06)
-              : Colors.white,
+              : c.cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _editMode
@@ -220,14 +211,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 : Colors.transparent,
             width: _editMode ? 1.5 : 0,
           ),
-          boxShadow: _editMode
-              ? []
-              : [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
-                ],
+          boxShadow: _editMode ? [] : c.cardShadow,
         ),
         child: Row(
           children: [
@@ -241,8 +225,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                      child: Text(account.icon,
-                          style: const TextStyle(fontSize: 26))),
+                      child:
+                          Text(account.icon, style: TextStyle(fontSize: 26))),
                 ),
                 if (_editMode)
                   Positioned(
@@ -252,12 +236,11 @@ class _AccountScreenState extends State<AccountScreen> {
                       width: 18,
                       height: 18,
                       decoration: BoxDecoration(
-                        color: AppTheme.accent,
+                        color: c.accent,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5),
+                        border: Border.all(color: c.cardBg, width: 1.5),
                       ),
-                      child: const Icon(Icons.edit_rounded,
-                          size: 9, color: Colors.white),
+                      child: Icon(Icons.edit_rounded, size: 9, color: c.cardBg),
                     ),
                   ),
               ],
@@ -269,13 +252,13 @@ class _AccountScreenState extends State<AccountScreen> {
                 children: [
                   Row(children: [
                     Text(account.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary)),
+                            color: c.textPrimary)),
                     if (account.isPrimary) ...[
                       const SizedBox(width: 6),
-                      const Icon(Icons.star, size: 14, color: Colors.amber),
+                      Icon(Icons.star, size: 14, color: Colors.amber),
                     ],
                   ]),
                   const SizedBox(height: 3),
@@ -284,8 +267,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     style: TextStyle(
                         fontSize: 12,
                         color: _editMode
-                            ? AppTheme.accent.withValues(alpha: 0.7)
-                            : AppTheme.textSecondary),
+                            ? c.accent.withValues(alpha: 0.7)
+                            : c.textSecondary),
                   ),
                 ],
               ),
@@ -298,14 +281,13 @@ class _AccountScreenState extends State<AccountScreen> {
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: bal >= 0 ? AppTheme.income : AppTheme.expense),
+                      color: bal >= 0 ? c.income : c.expense),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   bal >= 0 ? 'Surplus' : 'Defisit',
                   style: TextStyle(
-                      fontSize: 11,
-                      color: bal >= 0 ? AppTheme.income : AppTheme.expense),
+                      fontSize: 11, color: bal >= 0 ? c.income : c.expense),
                 ),
               ],
             ),
@@ -316,21 +298,16 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Widget _buildAddButton(String label, VoidCallback onTap) {
+    final c = context.colors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.cardBg,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: AppTheme.accent.withValues(alpha: 0.3), width: 2),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
-          ],
+          border: Border.all(color: c.accent.withValues(alpha: 0.3), width: 2),
+          boxShadow: c.cardShadow,
         ),
         child: Row(
           children: [
@@ -338,18 +315,17 @@ class _AccountScreenState extends State<AccountScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                  color: AppTheme.accent.withValues(alpha: 0.1),
+                  color: c.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.add_rounded,
-                  color: AppTheme.accent, size: 24),
+              child: Icon(Icons.add_rounded, color: c.accent, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(label,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.accent)),
+                      color: c.accent)),
             ),
           ],
         ),
@@ -357,10 +333,9 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  // ── ACCOUNT SHEET ──
-
   void _showAccountSheet(
       BuildContext context, AccountModel? existing, AccountType defaultType) {
+    final c = context.colors;
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final openingBalanceCtrl = TextEditingController(
         text: existing?.openingBalance != null && existing!.openingBalance != 0
@@ -403,9 +378,9 @@ class _AccountScreenState extends State<AccountScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModal) => Container(
           height: MediaQuery.of(ctx).size.height * 0.78,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: c.modalBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,18 +391,17 @@ class _AccountScreenState extends State<AccountScreen> {
                   height: 4,
                   margin: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                      color: AppTheme.divider,
-                      borderRadius: BorderRadius.circular(2)),
+                      color: c.divider, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: Text(
                   existing == null ? 'Tambah akun' : 'Edit akun',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary),
+                      color: c.textPrimary),
                 ),
               ),
               Expanded(
@@ -436,11 +410,12 @@ class _AccountScreenState extends State<AccountScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tipe selector — hanya Akun & Tunai (tanpa Tabungan)
                       if (existing == null) ...[
-                        const Text('Tipe',
+                        Text('Tipe',
                             style: TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600)),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: c.textPrimary)),
                         const SizedBox(height: 8),
                         Row(children: [
                           Expanded(
@@ -453,17 +428,19 @@ class _AccountScreenState extends State<AccountScreen> {
                         ]),
                         const SizedBox(height: 16),
                       ],
-                      const Text('Nama Akun',
+                      Text('Nama Akun',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: c.textPrimary)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: nameCtrl,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 14, color: c.textPrimary),
                         decoration: InputDecoration(
                           hintText: 'Contoh: Kartu, Tunai...',
                           prefixIcon: Text(icon,
-                              style: const TextStyle(fontSize: 20),
+                              style: TextStyle(fontSize: 20),
                               textAlign: TextAlign.center),
                           prefixIconConstraints:
                               const BoxConstraints(minWidth: 48, maxWidth: 48),
@@ -474,36 +451,40 @@ class _AccountScreenState extends State<AccountScreen> {
                         value: isPrimary,
                         onChanged: (v) =>
                             setModal(() => isPrimary = v ?? false),
-                        title: const Text('Akun Utama',
-                            style: TextStyle(fontSize: 14)),
-                        subtitle: const Text('Ditandai dengan bintang',
-                            style: TextStyle(fontSize: 12)),
+                        title: Text('Akun Utama',
+                            style:
+                                TextStyle(fontSize: 14, color: c.textPrimary)),
+                        subtitle: Text('Ditandai dengan bintang',
+                            style: TextStyle(
+                                fontSize: 12, color: c.textSecondary)),
                         contentPadding: EdgeInsets.zero,
-                        activeColor: AppTheme.accent,
+                        activeColor: c.accent,
                       ),
                       const SizedBox(height: 16),
-                      const Text('Saldo Awal',
+                      Text('Saldo Awal',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: c.textPrimary)),
                       const SizedBox(height: 8),
                       TextField(
                         controller: openingBalanceCtrl,
-                        style: const TextStyle(fontSize: 14),
+                        style: TextStyle(fontSize: 14, color: c.textPrimary),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Rp 0',
                           prefixText: 'Rp ',
-                          prefixStyle: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.textPrimary,
-                          ),
+                          prefixStyle:
+                              TextStyle(fontSize: 14, color: c.textPrimary),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Pilih Ikon',
+                      Text('Pilih Ikon',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: c.textPrimary)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
@@ -518,7 +499,7 @@ class _AccountScreenState extends State<AccountScreen> {
                               decoration: BoxDecoration(
                                 color: sel
                                     ? Color(color).withValues(alpha: 0.15)
-                                    : AppTheme.bgLight,
+                                    : c.bgLight,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
                                     color:
@@ -526,38 +507,39 @@ class _AccountScreenState extends State<AccountScreen> {
                                     width: 2),
                               ),
                               child: Center(
-                                  child: Text(ic,
-                                      style: const TextStyle(fontSize: 22))),
+                                  child:
+                                      Text(ic, style: TextStyle(fontSize: 22))),
                             ),
                           );
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Pilih Warna',
+                      Text('Pilih Warna',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: c.textPrimary)),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: colors.map((c) {
-                          final sel = color == c;
+                        children: colors.map((col) {
+                          final sel = color == col;
                           return GestureDetector(
-                            onTap: () => setModal(() => color = c),
+                            onTap: () => setModal(() => color = col),
                             child: Container(
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: Color(c),
+                                color: Color(col),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                    color:
-                                        sel ? Colors.white : Colors.transparent,
+                                    color: sel ? c.cardBg : Colors.transparent,
                                     width: 2),
                               ),
                               child: sel
-                                  ? const Icon(Icons.check_rounded,
-                                      color: Colors.white, size: 16)
+                                  ? Icon(Icons.check_rounded,
+                                      color: c.cardBg, size: 16)
                                   : null,
                             ),
                           );
@@ -570,11 +552,11 @@ class _AccountScreenState extends State<AccountScreen> {
                           child: OutlinedButton.icon(
                             onPressed: () =>
                                 _confirmDeleteAccount(ctx, existing),
-                            icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Hapus Akun'),
+                            icon: Icon(Icons.delete_outline_rounded),
+                            label: Text('Hapus Akun'),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppTheme.expense,
-                              side: const BorderSide(color: AppTheme.expense),
+                              foregroundColor: c.expense,
+                              side: BorderSide(color: c.expense),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                           ),
@@ -628,7 +610,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             existing == null
                                 ? 'Tambah akun'
                                 : 'Simpan perubahan',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -645,13 +627,14 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _confirmDeleteAccount(BuildContext sheetCtx, AccountModel account) {
+    final c = context.colors;
     showModalBottomSheet(
       context: sheetCtx,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: c.modalBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
         child: Column(
@@ -662,31 +645,30 @@ class _AccountScreenState extends State<AccountScreen> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                  color: AppTheme.divider,
-                  borderRadius: BorderRadius.circular(2)),
+                  color: c.divider, borderRadius: BorderRadius.circular(2)),
             ),
             Container(
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppTheme.expense.withValues(alpha: 0.1),
+                color: c.expense.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.delete_outline_rounded,
-                  color: AppTheme.expense, size: 28),
+              child: Icon(Icons.delete_outline_rounded,
+                  color: c.expense, size: 28),
             ),
             const SizedBox(height: 16),
-            const Text('Hapus Akun?',
+            Text('Hapus Akun?',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary)),
+                    color: c.textPrimary)),
             const SizedBox(height: 8),
             Text(
               'Akun "${account.name}" akan dihapus permanen.\nRiwayat transaksi tidak ikut terhapus.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 13, color: AppTheme.textSecondary, height: 1.5),
+              style:
+                  TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
             ),
             const SizedBox(height: 24),
             Row(
@@ -697,14 +679,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.bgLight,
+                          color: c.bgLight,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text('Batal',
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.textSecondary)),
+                                color: c.textSecondary)),
                       ),
                     ),
                   ),
@@ -723,14 +705,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          color: AppTheme.expense,
+                          color: c.expense,
                           borderRadius: BorderRadius.circular(12)),
-                      child: const Center(
+                      child: Center(
                         child: Text('Hapus',
                             style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white)),
+                                color: c.cardBg)),
                       ),
                     ),
                   ),
@@ -745,13 +727,14 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _typeChip(String label, AccountType type, AccountType selected,
       Function(AccountType) onTap) {
+    final c = context.colors;
     final isSel = type == selected;
     return GestureDetector(
       onTap: () => onTap(type),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSel ? AppTheme.accent : AppTheme.bgLight,
+          color: isSel ? c.accent : c.bgLight,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Center(
@@ -759,7 +742,7 @@ class _AccountScreenState extends State<AccountScreen> {
               style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: isSel ? Colors.white : AppTheme.textSecondary)),
+                  color: isSel ? c.cardBg : c.textSecondary)),
         ),
       ),
     );
@@ -783,8 +766,9 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: c.surface,
       body: SafeArea(
         child: Consumer<FinanceProvider>(
           builder: (context, provider, _) {
@@ -811,9 +795,8 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
 
             return Column(
               children: [
-                // ── HEADER ──
                 Container(
-                  color: Colors.white,
+                  color: c.cardBg,
                   padding: const EdgeInsets.fromLTRB(8, 12, 16, 16),
                   child: Column(
                     children: [
@@ -821,8 +804,8 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                         children: [
                           IconButton(
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                                size: 20, color: AppTheme.textPrimary),
+                            icon: Icon(Icons.arrow_back_ios_new_rounded,
+                                size: 20, color: c.textPrimary),
                           ),
                           Container(
                             width: 40,
@@ -834,7 +817,7 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                             ),
                             child: Center(
                                 child: Text(widget.account.icon,
-                                    style: const TextStyle(fontSize: 20))),
+                                    style: TextStyle(fontSize: 20))),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -843,20 +826,19 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                               children: [
                                 Row(children: [
                                   Text(widget.account.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,
-                                          color: AppTheme.textPrimary)),
+                                          color: c.textPrimary)),
                                   if (widget.account.isPrimary) ...[
                                     const SizedBox(width: 4),
-                                    const Icon(Icons.star,
+                                    Icon(Icons.star,
                                         size: 13, color: Colors.amber),
                                   ],
                                 ]),
                                 Text('${allTx.length} transaksi',
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppTheme.textSecondary)),
+                                    style: TextStyle(
+                                        fontSize: 12, color: c.textSecondary)),
                               ],
                             ),
                           ),
@@ -868,45 +850,40 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: balance >= 0
-                                        ? AppTheme.income
-                                        : AppTheme.expense),
+                                    color: balance >= 0 ? c.income : c.expense),
                               ),
                               Text(
                                 balance >= 0 ? 'Surplus' : 'Defisit',
                                 style: TextStyle(
                                     fontSize: 11,
-                                    color: balance >= 0
-                                        ? AppTheme.income
-                                        : AppTheme.expense),
+                                    color: balance >= 0 ? c.income : c.expense),
                               ),
                             ],
                           ),
                         ],
                       ),
                       const SizedBox(height: 14),
-                      // Summary masuk/keluar
                       Row(children: [
                         Expanded(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 14),
                             decoration: BoxDecoration(
-                              color: AppTheme.incomeLight,
+                              color: c.incomeLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Masuk',
+                                Text('Masuk',
                                     style: TextStyle(
-                                        fontSize: 11, color: AppTheme.income)),
+                                        fontSize: 11, color: c.income)),
                                 Text(
                                   CurrencyFormatter.formatCompact(income),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: AppTheme.income),
+                                      color: c.income),
                                 ),
                               ],
                             ),
@@ -918,21 +895,21 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                             padding: const EdgeInsets.symmetric(
                                 vertical: 10, horizontal: 14),
                             decoration: BoxDecoration(
-                              color: AppTheme.expenseLight,
+                              color: c.expenseLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Keluar',
+                                Text('Keluar',
                                     style: TextStyle(
-                                        fontSize: 11, color: AppTheme.expense)),
+                                        fontSize: 11, color: c.expense)),
                                 Text(
                                   CurrencyFormatter.formatCompact(expense),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: AppTheme.expense),
+                                      color: c.expense),
                                 ),
                               ],
                             ),
@@ -942,10 +919,8 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                     ],
                   ),
                 ),
-
-                // ── FILTER CHIPS — sama persis dengan transaction_screen ──
                 Container(
-                  color: Colors.white,
+                  color: c.cardBg,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                   child: SizedBox(
                     height: 40,
@@ -963,24 +938,22 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
                     ),
                   ),
                 ),
-                Container(height: 1, color: AppTheme.divider),
-
-                // ── LIST ──
+                Container(height: 1, color: c.divider),
                 Expanded(
                   child: filtered.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.receipt_long_rounded,
-                                  size: 56, color: AppTheme.divider),
-                              SizedBox(height: 12),
+                                  size: 56, color: c.divider),
+                              const SizedBox(height: 12),
                               Text(
                                 'Belum ada transaksi\ndi akun ini',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                     fontSize: 14,
-                                    color: AppTheme.textSecondary,
+                                    color: c.textSecondary,
                                     height: 1.5),
                               ),
                             ],
@@ -1020,33 +993,33 @@ class _AccountDetailScreenState extends State<_AccountDetailScreen> {
     );
   }
 
-  // Filter chip — sama persis dengan transaction_screen.dart
   Widget _filterChip(String value, String label, IconData icon) {
+    final c = context.colors;
     final isSelected = _filter == value;
-    Color color = AppTheme.accent;
-    if (value == 'income') color = AppTheme.income;
-    if (value == 'expense') color = AppTheme.expense;
+    Color color = c.accent;
+    if (value == 'income') color = c.income;
+    if (value == 'expense') color = c.expense;
 
     return GestureDetector(
       onTap: () => setState(() => _filter = value),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color : Colors.white,
+          color: isSelected ? color : c.cardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? color : AppTheme.divider),
-          boxShadow: isSelected ? [] : AppTheme.cardShadow,
+          border: Border.all(color: isSelected ? color : c.divider),
+          boxShadow: isSelected ? [] : c.cardShadow,
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: isSelected ? Colors.white : color),
+            Icon(icon, size: 14, color: isSelected ? c.cardBg : color),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : AppTheme.textSecondary,
+                color: isSelected ? c.cardBg : c.textSecondary,
               ),
             ),
           ],
