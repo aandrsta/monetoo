@@ -13,6 +13,7 @@ class AccountModel {
   final String icon;
   final int color;
   final bool isPrimary;
+  final double openingBalance;
   final DateTime createdAt;
 
   AccountModel({
@@ -22,6 +23,7 @@ class AccountModel {
     required this.icon,
     required this.color,
     this.isPrimary = false,
+    this.openingBalance = 0.0,
     required this.createdAt,
   });
 
@@ -33,6 +35,7 @@ class AccountModel {
       'icon': icon,
       'color': color,
       'isPrimary': isPrimary ? 1 : 0,
+      'openingBalance': openingBalance,
       'createdAt': createdAt.toIso8601String(),
     };
   }
@@ -45,6 +48,7 @@ class AccountModel {
       color: map['color'],
       type: AccountType.values.firstWhere((e) => e.name == map['type']),
       isPrimary: map['isPrimary'] == 1,
+      openingBalance: (map['openingBalance'] ?? 0.0).toDouble(),
       createdAt: DateTime.parse(map['createdAt']),
     );
   }
@@ -56,6 +60,7 @@ class AccountModel {
     String? icon,
     int? color,
     bool? isPrimary,
+    double? openingBalance,
     DateTime? createdAt,
   }) {
     return AccountModel(
@@ -65,6 +70,7 @@ class AccountModel {
       icon: icon ?? this.icon,
       color: color ?? this.color,
       isPrimary: isPrimary ?? this.isPrimary,
+      openingBalance: openingBalance ?? this.openingBalance,
       createdAt: createdAt ?? this.createdAt,
     );
   }

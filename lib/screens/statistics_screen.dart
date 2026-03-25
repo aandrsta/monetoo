@@ -23,6 +23,22 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   int _touchedExpenseIndex = -1;
   int _touchedIncomeIndex = -1;
 
+  // 0 = pengeluaran, 1 = pemasukan
+  int _chartTab = 0;
+  late final PageController _chartPageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _chartPageController = PageController(initialPage: _chartTab);
+  }
+
+  @override
+  void dispose() {
+    _chartPageController.dispose();
+    super.dispose();
+  }
+
   bool get _isCurrentMonth {
     final now = DateTime.now();
     return _selectedMonth.year == now.year && _selectedMonth.month == now.month;
@@ -36,7 +52,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Future<void> _pickMonth(BuildContext context) async {
-    // Simple year-month picker pakai showDialog
     int pickedYear = _selectedMonth.year;
     int pickedMonth = _selectedMonth.month;
 
@@ -53,7 +68,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Year selector
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -71,7 +85,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Month grid
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -159,7 +172,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     t.date.month == _selectedMonth.month)
                 .toList();
 
-            // Build category color map from provider (terkini)
             final categoryColorMap = {
               for (final cat in [
                 ...provider.expenseCategories,
@@ -225,7 +237,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             icon: const Icon(Icons.chevron_left_rounded,
                 color: AppTheme.textPrimary),
           ),
-          // Tap tengah → buka month picker
           GestureDetector(
             onTap: () => _pickMonth(context),
             child: Row(
@@ -331,6 +342,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
+  // ── DAILY CHART — tab slide pemasukan/pengeluaran ──
   Widget _buildDailyChart(List<TransactionModel> txs) {
     final totalDays =
         DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0).day;
@@ -346,14 +358,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       }
     }
 
-    final maxVal = [...dailyIncome, ...dailyExpense]
-        .fold<double>(0, (m, v) => v > m ? v : m);
-    final maxY = (maxVal * 1.25).clamp(1, double.infinity).toDouble();
+    // Tanggal hari ini (hanya relevan kalau bulan yang dipilih = bulan ini)
+    final now = DateTime.now();
+    final todayIdx = _isCurrentMonth ? now.day - 1 : -1;
+
+    // Subtitle: tanggal hari ini
+    final todayLabel = _isCurrentMonth
+        ? 'Hari ini: ${DateFormatter.formatShort(now)}'
+        : DateFormatter.formatMonthYear(_selectedMonth);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
-        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -361,100 +377,308 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Harian',
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary)),
-            const SizedBox(height: 8),
-            Row(children: [
-              _legendDot(AppTheme.income, 'Pemasukan'),
-              const SizedBox(width: 16),
-              _legendDot(AppTheme.expense, 'Pengeluaran'),
-            ]),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: BarChart(BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: maxY,
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    tooltipRoundedRadius: 10,
-                    tooltipPadding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    fitInsideHorizontally: true,
-                    fitInsideVertically: true,
-                    tooltipBgColor: const Color(0xFF111827),
-                    getTooltipItem: (group, _, rod, rodIndex) {
-                      final label = rodIndex == 0 ? 'Pemasukan' : 'Pengeluaran';
-                      return BarTooltipItem(
-                        'Tgl ${group.x + 1}\n$label\n${CurrencyFormatter.format(rod.toY)}',
-                        const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            height: 1.35),
-                      );
-                    },
-                  ),
-                ),
-                gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) =>
-                        const FlLine(color: AppTheme.divider, strokeWidth: 1)),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 22,
-                      getTitlesWidget: (value, _) {
-                        final day = value.toInt() + 1;
-                        final show = day == 1 ||
-                            day == totalDays ||
-                            day % (totalDays > 20 ? 5 : 2) == 0;
-                        if (!show) return const SizedBox.shrink();
-                        return Text('$day',
-                            style: const TextStyle(
-                                fontSize: 10, color: AppTheme.textSecondary));
-                      },
+            // ── Header + subtitle ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Harian',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary)),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              _isCurrentMonth
+                                  ? Icons.today_rounded
+                                  : Icons.calendar_month_rounded,
+                              size: 12,
+                              color: _isCurrentMonth
+                                  ? AppTheme.accent
+                                  : AppTheme.textSecondary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              todayLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: _isCurrentMonth
+                                    ? AppTheme.accent
+                                    : AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Tab selector ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppTheme.bgLight,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                barGroups: List.generate(
-                    totalDays,
-                    (i) => BarChartGroupData(
-                          x: i,
-                          barsSpace: 3,
-                          barRods: [
-                            BarChartRodData(
-                                toY: dailyIncome[i],
-                                color: AppTheme.income,
-                                width: 4,
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(2))),
-                            BarChartRodData(
-                                toY: dailyExpense[i],
-                                color: AppTheme.expense,
-                                width: 4,
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(2))),
-                          ],
-                        )),
-              )),
+                child: Row(
+                  children: [
+                    _chartTabItem(0, 'Pengeluaran', AppTheme.expense),
+                    _chartTabItem(1, 'Pemasukan', AppTheme.income),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── PageView chart ──
+            SizedBox(
+              height: 220,
+              child: PageView(
+                controller: _chartPageController,
+                onPageChanged: (i) => setState(() => _chartTab = i),
+                children: [
+                  // Halaman 0: Pengeluaran
+                  _chartPage(
+                    data: dailyExpense,
+                    color: AppTheme.expense,
+                    totalDays: totalDays,
+                    todayIdx: todayIdx,
+                    label: 'Pengeluaran',
+                  ),
+                  // Halaman 1: Pemasukan
+                  _chartPage(
+                    data: dailyIncome,
+                    color: AppTheme.income,
+                    totalDays: totalDays,
+                    todayIdx: todayIdx,
+                    label: 'Pemasukan',
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Dot indicator ──
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _dot(0),
+                  const SizedBox(width: 6),
+                  _dot(1),
+                ],
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _chartTabItem(int index, String label, Color color) {
+    final isSelected = _chartTab == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() => _chartTab = index);
+          _chartPageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                        color: color.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2))
+                  ]
+                : [],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : AppTheme.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _dot(int index) {
+    final isSelected = _chartTab == index;
+    final color = index == 0 ? AppTheme.expense : AppTheme.income;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: isSelected ? 18 : 6,
+      height: 6,
+      decoration: BoxDecoration(
+        color: isSelected ? color : AppTheme.divider,
+        borderRadius: BorderRadius.circular(3),
+      ),
+    );
+  }
+
+  Widget _chartPage({
+    required List<double> data,
+    required Color color,
+    required int totalDays,
+    required int todayIdx,
+    required String label,
+  }) {
+    final maxVal = data.fold<double>(0, (m, v) => v > m ? v : m);
+    final maxY = (maxVal * 1.25).clamp(1, double.infinity).toDouble();
+    final total = data.fold<double>(0, (s, v) => s + v);
+    final avg = total / totalDays;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Mini summary
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
+            child: Row(
+              children: [
+                _miniStat(
+                    'Total', CurrencyFormatter.formatCompact(total), color),
+                const SizedBox(width: 16),
+                _miniStat(
+                    'Rata-rata/hari',
+                    CurrencyFormatter.formatCompact(avg),
+                    AppTheme.textSecondary),
+              ],
+            ),
+          ),
+          Expanded(
+            child: BarChart(BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: maxY,
+              barTouchData: BarTouchData(
+                enabled: true,
+                touchTooltipData: BarTouchTooltipData(
+                  tooltipRoundedRadius: 10,
+                  tooltipPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
+                  tooltipBgColor: const Color(0xFF111827),
+                  getTooltipItem: (group, _, rod, __) {
+                    final day = group.x + 1;
+                    final isToday = todayIdx == group.x;
+                    return BarTooltipItem(
+                      '${isToday ? 'Hari ini' : 'Tgl $day'}\n$label\n${CurrencyFormatter.format(rod.toY)}',
+                      const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35),
+                    );
+                  },
+                ),
+              ),
+              gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (_) =>
+                      const FlLine(color: AppTheme.divider, strokeWidth: 1)),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                leftTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 22,
+                    getTitlesWidget: (value, _) {
+                      final day = value.toInt() + 1;
+                      final isToday = value.toInt() == todayIdx;
+                      // Tampilkan: hari pertama, terakhir, kelipatan 5, dan hari ini
+                      final show = day == 1 ||
+                          day == totalDays ||
+                          day % 5 == 0 ||
+                          isToday;
+                      if (!show) return const SizedBox.shrink();
+                      return Text(
+                        isToday ? '●' : '$day',
+                        style: TextStyle(
+                          fontSize: isToday ? 10 : 10,
+                          fontWeight:
+                              isToday ? FontWeight.w700 : FontWeight.w400,
+                          color: isToday ? color : AppTheme.textSecondary,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              barGroups: List.generate(
+                  totalDays,
+                  (i) => BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: data[i],
+                            // Bar hari ini dikasih warna lebih terang
+                            color: i == todayIdx
+                                ? color
+                                : color.withValues(alpha: 0.65),
+                            width: totalDays > 20 ? 7 : 10,
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(4)),
+                          ),
+                        ],
+                      )),
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _miniStat(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style:
+                const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+      ],
     );
   }
 
@@ -470,7 +694,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final Map<String, _CatData> map = {};
     for (final t in transactions) {
       if (t.type != type) continue;
-      // FIX: ambil warna dari categoryColorMap (terkini) bukan dari transaksi
       final currentColor =
           categoryColorMap[t.categoryName] ?? Color(t.categoryColor);
       if (!map.containsKey(t.categoryName)) {
@@ -481,7 +704,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           amount: 0,
         );
       } else {
-        // Update color setiap iterasi supaya selalu terkini
         map[t.categoryName] = _CatData(
           name: map[t.categoryName]!.name,
           icon: map[t.categoryName]!.icon,
@@ -738,18 +960,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
     );
   }
-
-  Widget _legendDot(Color color, String label) {
-    return Row(children: [
-      Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: 6),
-      Text(label,
-          style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
-    ]);
-  }
 }
 
 // ─────────────────────────────────────────────
@@ -810,7 +1020,6 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── HEADER ──
             Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(8, 12, 16, 16),
@@ -877,9 +1086,6 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
                 ],
               ),
             ),
-
-            // ── SORT BAR — FIX: wrap dalam SingleChildScrollView
-            // agar chip tidak gepeng dan full width tidak terpotong ──
             Container(
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -899,8 +1105,6 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
               ),
             ),
             Container(height: 1, color: AppTheme.divider),
-
-            // ── LIST ──
             Expanded(
               child: txs.isEmpty
                   ? const Center(
@@ -964,7 +1168,6 @@ class _CategoryDetailScreenState extends State<_CategoryDetailScreen> {
       color: AppTheme.divider,
       margin: const EdgeInsets.symmetric(horizontal: 4));
 
-  // FIX: chip pakai intrinsic size yang benar, bukan Expanded
   Widget _sortChip(String label, String value, Color color) {
     final isSelected = _sort == value;
     return GestureDetector(

@@ -24,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -68,6 +68,7 @@ class DatabaseHelper {
         icon TEXT NOT NULL,
         color INTEGER NOT NULL,
         isPrimary INTEGER NOT NULL DEFAULT 0,
+        openingBalance REAL NOT NULL DEFAULT 0,
         createdAt TEXT NOT NULL
       )
     ''');
@@ -109,6 +110,15 @@ class DatabaseHelper {
         ALTER TABLE transactions ADD COLUMN accountId TEXT
       ''');
     }
+
+    if (oldVersion < 4) {
+      // Add openingBalance column to accounts table
+      await db.execute('''
+        ALTER TABLE accounts ADD COLUMN openingBalance REAL DEFAULT 0
+      ''');
+    }
+
+    // Settings now use SharedPreferences instead of database
   }
 
   // ===== CATEGORY OPERATIONS =====

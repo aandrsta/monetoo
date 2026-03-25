@@ -132,6 +132,10 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   double _getAccountBalance(FinanceProvider provider, String accountId) {
+    // Get account from provider
+    final account = provider.accounts.firstWhere((a) => a.id == accountId);
+
+    // Get transactions for this account
     final txs = provider.transactions.where((t) => t.accountId == accountId);
     final income = txs
         .where((t) => t.type == TransactionType.income)
@@ -139,7 +143,9 @@ class _AccountScreenState extends State<AccountScreen> {
     final expense = txs
         .where((t) => t.type == TransactionType.expense)
         .fold(0.0, (s, t) => s + t.amount);
-    return income - expense;
+
+    // Balance = Opening Balance + Income - Expense
+    return account.openingBalance + income - expense;
   }
 
   Widget _buildAccountsTab(FinanceProvider provider) {
@@ -356,6 +362,10 @@ class _AccountScreenState extends State<AccountScreen> {
   void _showAccountSheet(
       BuildContext context, AccountModel? existing, AccountType defaultType) {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
+    final openingBalanceCtrl = TextEditingController(
+        text: existing?.openingBalance != null && existing!.openingBalance != 0
+            ? existing.openingBalance.toStringAsFixed(0)
+            : '');
     String icon = existing?.icon ?? '💳';
     int color = existing?.color ?? 0xFF4169E1;
     AccountType type = existing?.type ?? defaultType;
@@ -472,6 +482,25 @@ class _AccountScreenState extends State<AccountScreen> {
                         activeColor: AppTheme.accent,
                       ),
                       const SizedBox(height: 16),
+                      const Text('Saldo Awal',
+                          style: TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: openingBalanceCtrl,
+                        style: const TextStyle(fontSize: 14),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: const InputDecoration(
+                          hintText: 'Rp 0',
+                          prefixText: 'Rp ',
+                          prefixStyle: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       const Text('Pilih Ikon',
                           style: TextStyle(
                               fontSize: 13, fontWeight: FontWeight.w600)),
@@ -562,6 +591,12 @@ class _AccountScreenState extends State<AccountScreen> {
                               return;
                             }
                             final provider = context.read<FinanceProvider>();
+                            double openingBalance = 0.0;
+                            if (openingBalanceCtrl.text.isNotEmpty) {
+                              openingBalance =
+                                  double.tryParse(openingBalanceCtrl.text) ??
+                                      0.0;
+                            }
                             final account = AccountModel(
                               id: existing?.id ?? const Uuid().v4(),
                               name: nameCtrl.text.trim(),
@@ -569,6 +604,7 @@ class _AccountScreenState extends State<AccountScreen> {
                               icon: icon,
                               color: color,
                               isPrimary: isPrimary,
+                              openingBalance: openingBalance,
                               createdAt: existing?.createdAt ?? DateTime.now(),
                             );
                             if (existing == null) {

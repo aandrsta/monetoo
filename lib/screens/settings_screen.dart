@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/app_theme.dart';
 import '../utils/update_checker.dart';
 
@@ -59,6 +61,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ── SECTION: Tampilan ──
+                    _sectionLabel('Tampilan'),
+                    _card(children: [
+                      Consumer<ThemeProvider>(
+                        builder: (context, themeProvider, _) {
+                          return _themeTile(
+                            isDarkMode: themeProvider.isDarkMode,
+                            onToggle: (value) {
+                              themeProvider.setDarkMode(value);
+                            },
+                          );
+                        },
+                      ),
+                    ]),
+
+                    const SizedBox(height: 20),
+
                     // ── SECTION: Tentang Aplikasi ──
                     _sectionLabel('Tentang Aplikasi'),
                     _card(children: [
@@ -228,6 +247,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing,
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _themeTile({
+    required bool isDarkMode,
+    required Function(bool) onToggle,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                color: AppTheme.accent,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Mode Gelap',
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isDarkMode ? 'Aktif' : 'Nonaktif',
+                    style: const TextStyle(
+                        fontSize: 12, color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Switch(
+            value: isDarkMode,
+            onChanged: onToggle,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppTheme.accent,
+          ),
+        ],
       ),
     );
   }

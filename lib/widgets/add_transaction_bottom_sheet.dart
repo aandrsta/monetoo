@@ -129,7 +129,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         _amount = '0';
         _shouldResetAmount = false;
       } else if (_amount != '0' && _amount.length < 14) {
-        _amount += '00';
+        _amount += '000';
       }
     });
   }
@@ -636,7 +636,7 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Center(
-                            child: Text('00',
+                            child: Text('000',
                                 style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w600,

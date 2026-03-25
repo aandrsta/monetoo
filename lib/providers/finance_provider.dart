@@ -46,7 +46,10 @@ class FinanceProvider extends ChangeNotifier {
       .where((t) => t.type == TransactionType.expense)
       .fold(0, (sum, t) => sum + t.amount);
 
-  double get balance => totalIncome - totalExpense;
+  double get totalOpeningBalance =>
+      _accounts.fold(0, (sum, a) => sum + a.openingBalance);
+
+  double get balance => totalOpeningBalance + totalIncome - totalExpense;
 
   Future<void> initialize() async {
     _isLoading = true;
@@ -209,8 +212,26 @@ class FinanceProvider extends ChangeNotifier {
   }
 
   double getAccountBalance(String accountId) {
-    // For now, calculate total balance
-    // Later can be filtered by accountId when we add accountId to transactions
-    return balance;
+    // Get account opening balance
+    final account = _accounts.firstWhere((a) => a.id == accountId,
+        orElse: () => AccountModel(
+            id: accountId,
+            name: '',
+            type: AccountType.cash,
+            icon: '',
+            color: 0,
+            openingBalance: 0.0,
+            createdAt: DateTime.now()));
+
+    // Calculate transactions for this account
+    final txs = _transactions.where((t) => t.accountId == accountId);
+    final income = txs
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (s, t) => s + t.amount);
+    final expense = txs
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (s, t) => s + t.amount);
+
+    return account.openingBalance + income - expense;
   }
 }
