@@ -30,13 +30,6 @@ class FinanceProvider extends ChangeNotifier {
   List<AccountModel> get regularAccounts =>
       _accounts.where((a) => a.type != AccountType.savings).toList();
 
-  List<AccountModel> get savingsAccounts =>
-      _accounts.where((a) => a.type == AccountType.savings).toList();
-
-  AccountModel? get primaryAccount =>
-      _accounts.where((a) => a.isPrimary).isNotEmpty
-          ? _accounts.firstWhere((a) => a.isPrimary)
-          : null;
 
   double get totalIncome => _transactions
       .where((t) => t.type == TransactionType.income)
@@ -88,9 +81,6 @@ class FinanceProvider extends ChangeNotifier {
     }
   }
 
-  Future<List<TransactionModel>> getTransactionsByDate(DateTime date) async {
-    return await _db.getTransactionsByDate(date);
-  }
 
   Future<List<TransactionModel>> getTransactionsByMonth(
       int year, int month) async {
@@ -138,61 +128,6 @@ class FinanceProvider extends ChangeNotifier {
     await loadCategories();
   }
 
-  // ===== REPORT DATA =====
-
-  Future<Map<String, double>> getDailySummary(DateTime date) async {
-    return await _db.getDailySummary(date);
-  }
-
-  Future<Map<String, double>> getMonthlySummary(int year, int month) async {
-    return await _db.getMonthlySummary(year, month);
-  }
-
-  Future<Map<String, double>> getCategoryExpenseByMonth(
-      int year, int month) async {
-    return await _db.getCategoryExpenseByMonth(year, month);
-  }
-
-  Future<List<Map<String, dynamic>>> getDailyTotalsForMonth(
-      int year, int month) async {
-    return await _db.getDailyTotalsForMonth(year, month);
-  }
-
-  List<TransactionModel> getRecentTransactions({int limit = 5}) {
-    final sorted = List<TransactionModel>.from(_transactions)
-      ..sort((a, b) => b.date.compareTo(a.date));
-    return sorted.take(limit).toList();
-  }
-
-  Map<String, double> getExpensesByCategory() {
-    final Map<String, double> result = {};
-    for (final t in _transactions) {
-      if (t.type == TransactionType.expense) {
-        result[t.categoryName] = (result[t.categoryName] ?? 0) + t.amount;
-      }
-    }
-    return result;
-  }
-
-  Map<String, double> getIncomesByCategory() {
-    final Map<String, double> result = {};
-    for (final t in _transactions) {
-      if (t.type == TransactionType.income) {
-        result[t.categoryName] = (result[t.categoryName] ?? 0) + t.amount;
-      }
-    }
-    return result;
-  }
-
-  Map<String, int> getTransactionCountByCategory(TransactionType type) {
-    final Map<String, int> result = {};
-    for (final t in _transactions) {
-      if (t.type == type) {
-        result[t.categoryName] = (result[t.categoryName] ?? 0) + 1;
-      }
-    }
-    return result;
-  }
 
   // ===== ACCOUNTS =====
 

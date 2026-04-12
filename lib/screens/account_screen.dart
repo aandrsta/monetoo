@@ -11,6 +11,12 @@ import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
 import '../widgets/transaction_tile.dart';
+import '../widgets/edit_mode_widgets.dart';
+import '../widgets/income_expense_summary.dart';
+import '../widgets/transaction_filter_chips.dart';
+import '../widgets/confirm_delete_sheet.dart';
+import '../widgets/common/bottom_sheet_handle.dart';
+import 'account_detail_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -58,60 +64,21 @@ class _AccountScreenState extends State<AccountScreen> {
                               ),
                             ],
                           ),
-                          GestureDetector(
+                          EditModeButton(
+                            isEditMode: _editMode,
                             onTap: () {
                               setState(() => _editMode = !_editMode);
                               if (_editMode) {
                                 AppToast.info(context, 'Ketuk akun untuk edit');
                               }
                             },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: _editMode
-                                    ? c.accent
-                                    : c.accent.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                _editMode
-                                    ? Icons.edit_rounded
-                                    : Icons.edit_outlined,
-                                color: _editMode ? c.cardBg : c.accent,
-                                size: 20,
-                              ),
-                            ),
                           ),
                         ],
                       ),
                       if (_editMode) ...[
                         const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: c.accent.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: c.accent.withValues(alpha: 0.2)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info_outline_rounded,
-                                  size: 16,
-                                  color: c.accent.withValues(alpha: 0.8)),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Mode edit aktif — ketuk akun untuk ubah atau hapus',
-                                  style: TextStyle(
-                                      fontSize: 12, color: c.textSecondary),
-                                ),
-                              ),
-                            ],
-                          ),
+                        const EditModeBanner(
+                          message: 'Mode edit aktif — ketuk akun untuk ubah atau hapus',
                         ),
                       ],
                     ],
@@ -128,14 +95,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
   double _getAccountBalance(FinanceProvider provider, String accountId) {
     final account = provider.accounts.firstWhere((a) => a.id == accountId);
-    final txs = provider.transactions.where((t) => t.accountId == accountId);
-    final income = txs
-        .where((t) => t.type == TransactionType.income)
-        .fold(0.0, (s, t) => s + t.amount);
-    final expense = txs
-        .where((t) => t.type == TransactionType.expense)
-        .fold(0.0, (s, t) => s + t.amount);
-    return account.openingBalance + income - expense;
+    final txs = provider.transactions.where((t) => t.accountId == accountId).toList();
+    return account.openingBalance + txs.balance;
   }
 
   Widget _buildAccountsTab(FinanceProvider provider) {
@@ -191,7 +152,7 @@ class _AccountScreenState extends State<AccountScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => _AccountDetailScreen(account: account),
+              builder: (_) => AccountDetailScreen(account: account),
             ),
           );
         }
@@ -385,14 +346,8 @@ class _AccountScreenState extends State<AccountScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                      color: c.divider, borderRadius: BorderRadius.circular(2)),
-                ),
+              const Center(
+                child: BottomSheetHandle(),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -550,8 +505,20 @@ class _AccountScreenState extends State<AccountScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () =>
-                                _confirmDeleteAccount(ctx, existing),
+                            onPressed: () async {
+                              final confirmed = await ConfirmDeleteSheet.show(
+                                context,
+                                title: 'Hapus Akun?',
+                                description: 'Akun "${account.name}" akan dihapus permanen.\nRiwayat transaksi tidak ikut terhapus.',
+                              );
+                              if (confirmed == true) {
+                                final provider = context.read<FinanceProvider>();
+                                provider.deleteAccount(account.id);
+                                Navigator.pop(ctx);
+                                AppToast.success(context, 'Akun berhasil dihapus');
+                                setState(() => _editMode = false);
+                              }
+                            },
                             icon: Icon(Icons.delete_outline_rounded),
                             label: Text('Hapus Akun'),
                             style: OutlinedButton.styleFrom(
@@ -626,104 +593,6 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  void _confirmDeleteAccount(BuildContext sheetCtx, AccountModel account) {
-    final c = context.colors;
-    showModalBottomSheet(
-      context: sheetCtx,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: c.modalBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                  color: c.divider, borderRadius: BorderRadius.circular(2)),
-            ),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: c.expense.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.delete_outline_rounded,
-                  color: c.expense, size: 28),
-            ),
-            const SizedBox(height: 16),
-            Text('Hapus Akun?',
-                style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: c.textPrimary)),
-            const SizedBox(height: 8),
-            Text(
-              'Akun "${account.name}" akan dihapus permanen.\nRiwayat transaksi tidak ikut terhapus.',
-              textAlign: TextAlign.center,
-              style:
-                  TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                          color: c.bgLight,
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Center(
-                        child: Text('Batal',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: c.textSecondary)),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      final provider = context.read<FinanceProvider>();
-                      provider.deleteAccount(account.id);
-                      Navigator.pop(ctx);
-                      Navigator.pop(sheetCtx);
-                      AppToast.success(context, 'Akun berhasil dihapus');
-                      setState(() => _editMode = false);
-                    },
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                          color: c.expense,
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Center(
-                        child: Text('Hapus',
-                            style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: c.cardBg)),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _typeChip(String label, AccountType type, AccountType selected,
       Function(AccountType) onTap) {
@@ -749,282 +618,3 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// ACCOUNT DETAIL SCREEN
-// ─────────────────────────────────────────────
-
-class _AccountDetailScreen extends StatefulWidget {
-  final AccountModel account;
-  const _AccountDetailScreen({required this.account});
-
-  @override
-  State<_AccountDetailScreen> createState() => _AccountDetailScreenState();
-}
-
-class _AccountDetailScreenState extends State<_AccountDetailScreen> {
-  String _filter = 'all';
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Scaffold(
-      backgroundColor: c.surface,
-      body: SafeArea(
-        child: Consumer<FinanceProvider>(
-          builder: (context, provider, _) {
-            final allTx = provider.transactions
-                .where((t) => t.accountId == widget.account.id)
-                .toList()
-              ..sort((a, b) => b.date.compareTo(a.date));
-
-            final filtered = _filter == 'income'
-                ? allTx.where((t) => t.type == TransactionType.income).toList()
-                : _filter == 'expense'
-                    ? allTx
-                        .where((t) => t.type == TransactionType.expense)
-                        .toList()
-                    : allTx;
-
-            final income = allTx
-                .where((t) => t.type == TransactionType.income)
-                .fold(0.0, (s, t) => s + t.amount);
-            final expense = allTx
-                .where((t) => t.type == TransactionType.expense)
-                .fold(0.0, (s, t) => s + t.amount);
-            final balance = income - expense;
-
-            return Column(
-              children: [
-                Container(
-                  color: c.cardBg,
-                  padding: const EdgeInsets.fromLTRB(8, 12, 16, 16),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: Icon(Icons.arrow_back_ios_new_rounded,
-                                size: 20, color: c.textPrimary),
-                          ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Color(widget.account.color)
-                                  .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Center(
-                                child: Text(widget.account.icon,
-                                    style: TextStyle(fontSize: 20))),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(children: [
-                                  Text(widget.account.name,
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: c.textPrimary)),
-                                  if (widget.account.isPrimary) ...[
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.star,
-                                        size: 13, color: Colors.amber),
-                                  ],
-                                ]),
-                                Text('${allTx.length} transaksi',
-                                    style: TextStyle(
-                                        fontSize: 12, color: c.textSecondary)),
-                              ],
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                CurrencyFormatter.format(balance),
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: balance >= 0 ? c.income : c.expense),
-                              ),
-                              Text(
-                                balance >= 0 ? 'Surplus' : 'Defisit',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: balance >= 0 ? c.income : c.expense),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Row(children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: c.incomeLight,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Masuk',
-                                    style: TextStyle(
-                                        fontSize: 11, color: c.income)),
-                                Text(
-                                  CurrencyFormatter.formatCompact(income),
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: c.income),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 10, horizontal: 14),
-                            decoration: BoxDecoration(
-                              color: c.expenseLight,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Keluar',
-                                    style: TextStyle(
-                                        fontSize: 11, color: c.expense)),
-                                Text(
-                                  CurrencyFormatter.formatCompact(expense),
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: c.expense),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ]),
-                    ],
-                  ),
-                ),
-                Container(
-                  color: c.cardBg,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: SizedBox(
-                    height: 40,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _filterChip('all', 'Semua', Icons.list_rounded),
-                        const SizedBox(width: 8),
-                        _filterChip('income', 'Pemasukan',
-                            Icons.arrow_downward_rounded),
-                        const SizedBox(width: 8),
-                        _filterChip('expense', 'Pengeluaran',
-                            Icons.arrow_upward_rounded),
-                      ],
-                    ),
-                  ),
-                ),
-                Container(height: 1, color: c.divider),
-                Expanded(
-                  child: filtered.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.receipt_long_rounded,
-                                  size: 56, color: c.divider),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Belum ada transaksi\ndi akun ini',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: c.textSecondary,
-                                    height: 1.5),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final tx = filtered[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: TransactionTile(
-                                transaction: tx,
-                                onDelete: () {
-                                  provider.deleteTransaction(tx.id);
-                                  AppToast.success(
-                                      context, 'Transaksi berhasil dihapus');
-                                },
-                                onEdit: () => showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (_) => AddTransactionBottomSheet(
-                                      transaction: tx),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _filterChip(String value, String label, IconData icon) {
-    final c = context.colors;
-    final isSelected = _filter == value;
-    Color color = c.accent;
-    if (value == 'income') color = c.income;
-    if (value == 'expense') color = c.expense;
-
-    return GestureDetector(
-      onTap: () => setState(() => _filter = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? color : c.cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? color : c.divider),
-          boxShadow: isSelected ? [] : c.cardShadow,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 14, color: isSelected ? c.cardBg : color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isSelected ? c.cardBg : c.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

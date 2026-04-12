@@ -211,3 +211,24 @@ List<CategoryModel> getDefaultCategories() {
         createdAt: now),
   ];
 }
+
+class CategoryStatData {
+  final String name;
+  final String icon;
+  final int color; // Changed from Color to int to be more database-model friendly
+  final double amount;
+
+  const CategoryStatData({
+    required this.name,
+    required this.icon,
+    required this.color,
+    required this.amount,
+  });
+
+  CategoryStatData addAmount(double more) => CategoryStatData(
+        name: name,
+        icon: icon,
+        color: color,
+        amount: amount + more,
+      );
+}

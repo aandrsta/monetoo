@@ -129,16 +129,6 @@ class DatabaseHelper {
     return result.map((e) => CategoryModel.fromMap(e)).toList();
   }
 
-  Future<List<CategoryModel>> getCategoriesByType(TransactionType type) async {
-    final db = await database;
-    final result = await db.query(
-      'categories',
-      where: 'type = ?',
-      whereArgs: [type.name],
-      orderBy: 'isDefault DESC, name ASC',
-    );
-    return result.map((e) => CategoryModel.fromMap(e)).toList();
-  }
 
   Future<String> insertCategory(CategoryModel category) async {
     final db = await database;
@@ -170,20 +160,6 @@ class DatabaseHelper {
     return result.map((e) => TransactionModel.fromMap(e)).toList();
   }
 
-  Future<List<TransactionModel>> getTransactionsByDate(DateTime date) async {
-    final db = await database;
-    final start = DateTime(date.year, date.month, date.day).toIso8601String();
-    final end =
-        DateTime(date.year, date.month, date.day, 23, 59, 59).toIso8601String();
-
-    final result = await db.query(
-      'transactions',
-      where: 'date >= ? AND date <= ?',
-      whereArgs: [start, end],
-      orderBy: 'date DESC, createdAt DESC',
-    );
-    return result.map((e) => TransactionModel.fromMap(e)).toList();
-  }
 
   Future<List<TransactionModel>> getTransactionsByDateRange(
       DateTime startDate, DateTime endDate) async {
@@ -246,79 +222,6 @@ class DatabaseHelper {
 
   // ===== SUMMARY OPERATIONS =====
 
-  Future<Map<String, double>> getDailySummary(DateTime date) async {
-    final transactions = await getTransactionsByDate(date);
-    double income = 0;
-    double expense = 0;
-
-    for (final t in transactions) {
-      if (t.type == TransactionType.income) {
-        income += t.amount;
-      } else {
-        expense += t.amount;
-      }
-    }
-
-    return {'income': income, 'expense': expense, 'balance': income - expense};
-  }
-
-  Future<Map<String, double>> getMonthlySummary(int year, int month) async {
-    final transactions = await getTransactionsByMonth(year, month);
-    double income = 0;
-    double expense = 0;
-
-    for (final t in transactions) {
-      if (t.type == TransactionType.income) {
-        income += t.amount;
-      } else {
-        expense += t.amount;
-      }
-    }
-
-    return {'income': income, 'expense': expense, 'balance': income - expense};
-  }
-
-  Future<Map<String, double>> getCategoryExpenseByMonth(
-      int year, int month) async {
-    final transactions = await getTransactionsByMonth(year, month);
-    final Map<String, double> result = {};
-
-    for (final t in transactions) {
-      if (t.type == TransactionType.expense) {
-        result[t.categoryName] = (result[t.categoryName] ?? 0) + t.amount;
-      }
-    }
-
-    return result;
-  }
-
-  Future<List<Map<String, dynamic>>> getDailyTotalsForMonth(
-      int year, int month) async {
-    final transactions = await getTransactionsByMonth(year, month);
-    final Map<String, Map<String, double>> dailyMap = {};
-
-    for (final t in transactions) {
-      final dayKey =
-          '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}-${t.date.day.toString().padLeft(2, '0')}';
-      dailyMap[dayKey] ??= {'income': 0, 'expense': 0};
-      if (t.type == TransactionType.income) {
-        dailyMap[dayKey]!['income'] =
-            (dailyMap[dayKey]!['income'] ?? 0) + t.amount;
-      } else {
-        dailyMap[dayKey]!['expense'] =
-            (dailyMap[dayKey]!['expense'] ?? 0) + t.amount;
-      }
-    }
-
-    return dailyMap.entries
-        .map((e) => {
-              'date': e.key,
-              'income': e.value['income'],
-              'expense': e.value['expense']
-            })
-        .toList()
-      ..sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
-  }
 
   // ===== ACCOUNT OPERATIONS =====
 
@@ -329,28 +232,7 @@ class DatabaseHelper {
     return result.map((e) => AccountModel.fromMap(e)).toList();
   }
 
-  Future<List<AccountModel>> getAccountsByType(AccountType type) async {
-    final db = await database;
-    final result = await db.query(
-      'accounts',
-      where: 'type = ?',
-      whereArgs: [type.name],
-      orderBy: 'isPrimary DESC, name ASC',
-    );
-    return result.map((e) => AccountModel.fromMap(e)).toList();
-  }
 
-  Future<AccountModel?> getPrimaryAccount() async {
-    final db = await database;
-    final result = await db.query(
-      'accounts',
-      where: 'isPrimary = ?',
-      whereArgs: [1],
-      limit: 1,
-    );
-    if (result.isEmpty) return null;
-    return AccountModel.fromMap(result.first);
-  }
 
   Future<String> insertAccount(AccountModel account) async {
     final db = await database;

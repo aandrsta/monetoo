@@ -28,10 +28,6 @@ class CurrencyFormatter {
     return _compact.format(amount);
   }
 
-  static String formatWithSign(double amount, {bool isExpense = false}) {
-    final sign = isExpense ? '- ' : '+ ';
-    return '$sign${_formatter.format(amount)}';
-  }
 }
 
 class DateFormatter {
