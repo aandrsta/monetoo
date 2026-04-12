@@ -11,6 +11,7 @@ import '../providers/finance_provider.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_theme.dart';
 import '../utils/app_toast.dart';
+import '../widgets/calculator_numpad.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
   final CategoryModel? initialCategory;
@@ -21,6 +22,19 @@ class AddTransactionBottomSheet extends StatefulWidget {
     this.initialCategory,
     this.transaction,
   });
+
+  static void show(BuildContext context,
+      {TransactionModel? transaction, CategoryModel? initialCategory}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTransactionBottomSheet(
+        transaction: transaction,
+        initialCategory: initialCategory,
+      ),
+    );
+  }
 
   @override
   State<AddTransactionBottomSheet> createState() =>
@@ -518,7 +532,18 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
           Divider(height: 1, color: c.divider),
 
           // ── NUMPAD ──
-          _buildNumpad(typeColor, hasOp),
+          CalculatorNumpad(
+            typeColor: typeColor,
+            hasOperation: hasOp,
+            selectedOperator: _operation,
+            onNumber: _onNumber,
+            onDoubleZero: _onDoubleZero,
+            onClear: _onClear,
+            onBackspace: _onBackspace,
+            onOperator: _onOperator,
+            onEquals: _onEquals,
+            onSave: _onSave,
+          ),
         ],
       ),
     );
@@ -535,225 +560,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
         .replaceAll(',', '.');
   }
 
-  Widget _buildNumpad(Color typeColor, bool hasOp) {
-    final c = context.colors;
-    const h = 56.0;
-    const gap = 8.0;
-    const double sideW = 64.0;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _opKey('÷', h),
-                const SizedBox(height: gap),
-                _opKey('×', h),
-                const SizedBox(height: gap),
-                _opKey('−', h),
-                const SizedBox(height: gap),
-                _opKey('+', h),
-              ],
-            ),
-            const SizedBox(width: gap),
-            Expanded(
-              child: Column(
-                children: [
-                  Row(children: [
-                    Expanded(child: _numKey('7', h)),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('8', h)),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('9', h)),
-                  ]),
-                  const SizedBox(height: gap),
-                  Row(children: [
-                    Expanded(child: _numKey('4', h)),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('5', h)),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('6', h)),
-                  ]),
-                  const SizedBox(height: gap),
-                  Row(children: [
-                    Expanded(child: _numKey('1', h)),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('2', h)),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('3', h)),
-                  ]),
-                  const SizedBox(height: gap),
-                  Row(children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: _onClear,
-                        child: Container(
-                          height: h,
-                          decoration: BoxDecoration(
-                            color: c.bgLight,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Center(
-                            child: Text('C',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.textSecondary)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: gap),
-                    Expanded(child: _numKey('0', h)),
-                    const SizedBox(width: gap),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: _onDoubleZero,
-                        child: Container(
-                          height: h,
-                          decoration: BoxDecoration(
-                            color: c.bgLight,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Center(
-                            child: Text('000',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.textPrimary)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ]),
-                ],
-              ),
-            ),
-            const SizedBox(width: gap),
-            SizedBox(
-              width: sideW,
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: h,
-                    child: GestureDetector(
-                      onTap: _onBackspace,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: c.bgLight,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Center(
-                          child: Icon(Icons.backspace_outlined,
-                              color: c.textSecondary, size: 20),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: gap),
-                  Expanded(
-                    child: hasOp
-                        ? Column(children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: _onEquals,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.shade500,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Center(
-                                    child: Text('=',
-                                        style: TextStyle(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w700,
-                                            color: c.cardBg)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: gap),
-                            Expanded(child: _saveButton(typeColor)),
-                          ])
-                        : _saveButton(typeColor),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _numKey(String label, double h) {
-    final c = context.colors;
-    return GestureDetector(
-      onTap: () => _onNumber(label),
-      child: Container(
-        height: h,
-        decoration: BoxDecoration(
-          color: c.bgLight,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Center(
-          child: Text(label,
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w500,
-                  color: c.textPrimary)),
-        ),
-      ),
-    );
-  }
-
-  Widget _opKey(String op, double h) {
-    final c = context.colors;
-    final isActive = _operation == op && _previousValue != null;
-    return SizedBox(
-      width: 52,
-      height: h,
-      child: GestureDetector(
-        onTap: () => _onOperator(op),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          decoration: BoxDecoration(
-            color: isActive
-                ? Colors.orange.shade500
-                : Colors.orange.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Center(
-            child: Text(op,
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w500,
-                    color: isActive ? c.cardBg : Colors.orange.shade600)),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _saveButton(Color color) {
-    final c = context.colors;
-    return GestureDetector(
-      onTap: _onSave,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Center(
-          child: Icon(Icons.check_rounded, color: c.cardBg, size: 28),
-        ),
-      ),
-    );
-  }
 
   Widget _typeTab(String label, TransactionType type, Color color) {
     final c = context.colors;

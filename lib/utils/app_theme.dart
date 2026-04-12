@@ -10,7 +10,6 @@ class AppTheme {
   static const Color primary = Color(0xFF1A1F36);
   static const Color primaryLight = Color(0xFF2D3561);
   static const Color accent = Color(0xFF7C6FFF);
-  static const Color accentGlow = Color(0xFF9D93FF);
   static const Color income = Color(0xFF00D4AA);
   static const Color incomeLight = Color(0xFFE6FBF7);
   static const Color expense = Color(0xFFFF5C7A);
@@ -28,7 +27,6 @@ class AppTheme {
   static const Color darkPrimary = Color(0xFF0F1419);
   static const Color darkPrimaryLight = Color(0xFF1A1F2E);
   static const Color darkAccent = Color(0xFF9D93FF);
-  static const Color darkAccentGlow = Color(0xFFB5ACFF);
   static const Color darkIncome = Color(0xFF00D4AA);
   static const Color darkIncomeLightBg = Color(0xFF0D3B37);
   static const Color darkExpense = Color(0xFFFF6B82);
@@ -214,13 +212,6 @@ class AppTheme {
         ),
       ];
 
-  static List<BoxShadow> get accentShadow => [
-        BoxShadow(
-          color: accent.withValues(alpha: 0.3),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ];
 
   // Gradients
   static LinearGradient get primaryGradient => const LinearGradient(
@@ -229,21 +220,4 @@ class AppTheme {
         end: Alignment.bottomRight,
       );
 
-  static LinearGradient get accentGradient => const LinearGradient(
-        colors: [accent, Color(0xFF9D85FF)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-
-  static LinearGradient get incomeGradient => const LinearGradient(
-        colors: [Color(0xFF00D4AA), Color(0xFF00B899)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-
-  static LinearGradient get expenseGradient => const LinearGradient(
-        colors: [Color(0xFFFF5C7A), Color(0xFFFF3B5C)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
 }
