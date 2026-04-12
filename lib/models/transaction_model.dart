@@ -95,3 +95,24 @@ class TransactionModel {
     );
   }
 }
+
+extension TransactionListX on List<TransactionModel> {
+  double get totalIncome =>
+      where((t) => t.type == TransactionType.income).fold(0.0, (s, t) => s + t.amount);
+
+  double get totalExpense =>
+      where((t) => t.type == TransactionType.expense).fold(0.0, (s, t) => s + t.amount);
+
+  double get balance => totalIncome - totalExpense;
+
+  Map<String, List<TransactionModel>> groupByDate() {
+    final Map<String, List<TransactionModel>> groups = {};
+    for (final t in this) {
+      final key =
+          '${t.date.year}-${t.date.month.toString().padLeft(2, '0')}-${t.date.day.toString().padLeft(2, '0')}';
+      groups[key] ??= [];
+      groups[key]!.add(t);
+    }
+    return groups;
+  }
+}

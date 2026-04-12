@@ -37,7 +37,6 @@ abstract class AppColors {
   // Shadows — berubah opacity di dark mode
   List<BoxShadow> get cardShadow;
 
-  static Object? get instance => null;
 }
 
 // ─── LIGHT ───────────────────────────────────────────────────

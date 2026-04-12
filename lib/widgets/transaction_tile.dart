@@ -7,6 +7,7 @@ import '../providers/finance_provider.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
+import 'confirm_delete_sheet.dart';
 
 class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
@@ -45,7 +46,11 @@ class TransactionTile extends StatelessWidget {
         ),
         child: Icon(Icons.delete_rounded, color: c.cardBg),
       ),
-      confirmDismiss: (_) async => await _showDeleteConfirm(context),
+      confirmDismiss: (_) async => await ConfirmDeleteSheet.show(
+        context,
+        title: 'Hapus Transaksi?',
+        description: 'Transaksi ini akan dihapus permanen\ndan tidak bisa dikembalikan.',
+      ),
       onDismissed: (_) {
         onDelete();
         AppToast.success(context, 'Transaksi berhasil dihapus');
@@ -71,7 +76,7 @@ class TransactionTile extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(transaction.categoryIcon,
-                      style: TextStyle(fontSize: 20)),
+                      style: const TextStyle(fontSize: 20)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -105,7 +110,7 @@ class TransactionTile extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(account.icon,
-                                      style: TextStyle(fontSize: 10)),
+                                      style: const TextStyle(fontSize: 10)),
                                   const SizedBox(width: 3),
                                   Text(
                                     account.name,
@@ -161,95 +166,6 @@ class TransactionTile extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Future<bool?> _showDeleteConfirm(BuildContext context) {
-    final c = context.colors;
-    return showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: c.modalBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                  color: c.divider, borderRadius: BorderRadius.circular(2)),
-            ),
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                  color: c.expense.withValues(alpha: 0.1),
-                  shape: BoxShape.circle),
-              child: Icon(Icons.delete_outline_rounded,
-                  color: c.expense, size: 28),
-            ),
-            const SizedBox(height: 16),
-            Text('Hapus Transaksi?',
-                style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: c.textPrimary)),
-            const SizedBox(height: 8),
-            Text(
-              'Transaksi ini akan dihapus permanen\ndan tidak bisa dikembalikan.',
-              textAlign: TextAlign.center,
-              style:
-                  TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, false),
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                          color: c.bgLight,
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Center(
-                          child: Text('Batal',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: c.textSecondary))),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx, true),
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                          color: c.expense,
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Center(
-                          child: Text('Hapus',
-                              style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: c.cardBg))),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );
