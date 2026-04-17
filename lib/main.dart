@@ -14,6 +14,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
 
+  // Global Error Handler
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    // You could add crash reporting here (e.g. Sentry/Firebase)
+    debugPrint('Global Error: ${details.exception}');
+  };
+
   // Initialize providers
   final themeProvider = ThemeProvider();
   await themeProvider.initialize();
@@ -75,7 +82,6 @@ class MyApp extends StatelessWidget {
                 return MediaQuery(
                   data: MediaQuery.of(context).copyWith(
                     boldText: false,
-                    disableAnimations: true,
                   ),
                   child: child!,
                 );

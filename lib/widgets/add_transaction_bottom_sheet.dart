@@ -12,6 +12,8 @@ import '../utils/app_colors.dart';
 import '../utils/app_theme.dart';
 import '../utils/app_toast.dart';
 import '../widgets/calculator_numpad.dart';
+import 'transaction/account_picker.dart';
+import 'transaction/category_picker.dart';
 
 class AddTransactionBottomSheet extends StatefulWidget {
   final CategoryModel? initialCategory;
@@ -331,7 +333,12 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: _showAccountPicker,
+                    onTap: () => AccountPicker.show(
+                      context,
+                      accounts: context.read<FinanceProvider>().accounts,
+                      selectedAccount: _selectedAccount,
+                      onSelected: (acc) => setState(() => _selectedAccount = acc),
+                    ),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
@@ -370,7 +377,18 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
-                    onTap: _showCategoryPicker,
+                    onTap: () {
+                      final provider = context.read<FinanceProvider>();
+                      CategoryPicker.show(
+                        context,
+                        categories: _selectedType == TransactionType.expense
+                            ? provider.expenseCategories
+                            : provider.incomeCategories,
+                        selectedCategory: _selectedCategory,
+                        type: _selectedType,
+                        onSelected: (cat) => setState(() => _selectedCategory = cat),
+                      );
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
@@ -720,178 +738,6 @@ class _AddTransactionBottomSheetState extends State<AddTransactionBottomSheet> {
     tempCtrl.dispose();
   }
 
-  void _showCategoryPicker() {
-    final c = context.colors;
-    final provider = context.read<FinanceProvider>();
-    final categories = _selectedType == TransactionType.expense
-        ? provider.expenseCategories
-        : provider.incomeCategories;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        decoration: BoxDecoration(
-          color: c.modalBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: c.divider, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 20),
-            Text(
-              _selectedType == TransactionType.expense
-                  ? 'Kategori Pengeluaran'
-                  : 'Kategori Pemasukan',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: c.textPrimary),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1,
-                ),
-                itemCount: categories.length,
-                itemBuilder: (ctx, i) {
-                  final cat = categories[i];
-                  final isSel = _selectedCategory?.id == cat.id;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedCategory = cat);
-                      Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Color(cat.color).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color:
-                                isSel ? Color(cat.color) : Colors.transparent,
-                            width: 2),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(cat.icon, style: TextStyle(fontSize: 32)),
-                          const SizedBox(height: 8),
-                          Text(cat.name,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: c.textPrimary),
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAccountPicker() {
-    final c = context.colors;
-    final provider = context.read<FinanceProvider>();
-    final accounts = provider.accounts;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        height: MediaQuery.of(context).size.height * 0.5,
-        decoration: BoxDecoration(
-          color: c.modalBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: c.divider, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 20),
-            Text('Pilih Akun',
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary)),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: accounts.length,
-                itemBuilder: (ctx, i) {
-                  final acc = accounts[i];
-                  final isSel = _selectedAccount?.id == acc.id;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedAccount = acc);
-                      Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: isSel
-                            ? Color(acc.color).withValues(alpha: 0.1)
-                            : c.bgLight,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                            color:
-                                isSel ? Color(acc.color) : Colors.transparent,
-                            width: 1.5),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(acc.icon, style: TextStyle(fontSize: 24)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(acc.name,
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: c.textPrimary)),
-                          ),
-                          if (acc.isPrimary)
-                            Icon(Icons.star, size: 14, color: Colors.amber),
-                          if (isSel) ...[
-                            const SizedBox(width: 6),
-                            Icon(Icons.check_circle,
-                                color: Color(acc.color), size: 20),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _pickDate() async {

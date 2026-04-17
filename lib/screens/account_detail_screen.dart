@@ -103,17 +103,17 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                CurrencyFormatter.format(allTx.balance),
+                                CurrencyFormatter.format(provider.getAccountBalance(widget.account.id)),
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: allTx.balance >= 0 ? c.income : c.expense),
+                                    color: provider.getAccountBalance(widget.account.id) >= 0 ? c.income : c.expense),
                               ),
                               Text(
-                                allTx.balance >= 0 ? 'Surplus' : 'Defisit',
+                                provider.getAccountBalance(widget.account.id) >= 0 ? 'Surplus' : 'Defisit',
                                 style: TextStyle(
                                     fontSize: 11,
-                                    color: allTx.balance >= 0 ? c.income : c.expense),
+                                    color: provider.getAccountBalance(widget.account.id) >= 0 ? c.income : c.expense),
                               ),
                             ],
                           ),

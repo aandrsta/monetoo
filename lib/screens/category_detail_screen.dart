@@ -198,11 +198,14 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
 
-  Widget _statDivider() => Container(
-      width: 1,
-      height: 28,
-      color: AppTheme.divider,
-      margin: const EdgeInsets.symmetric(horizontal: 4));
+  Widget _statDivider() {
+    final c = context.colors;
+    return Container(
+        width: 1,
+        height: 28,
+        color: c.divider,
+        margin: const EdgeInsets.symmetric(horizontal: 4));
+  }
 
   Widget _sortChip(String label, String value, Color color) {
     final c = context.colors;

@@ -24,7 +24,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -118,6 +118,13 @@ class DatabaseHelper {
       ''');
     }
 
+    if (oldVersion < 6) {
+      // Add indexes for performance
+      await db.execute('CREATE INDEX idx_tx_date ON transactions(date)');
+      await db.execute('CREATE INDEX idx_tx_category ON transactions(categoryId)');
+      await db.execute('CREATE INDEX idx_tx_account ON transactions(accountId)');
+    }
+
     // Settings now use SharedPreferences instead of database
   }
 
@@ -146,8 +153,46 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> deleteCategory(String id) async {
+  Future<int> deleteCategory(String id, {String? fallbackId}) async {
     final db = await database;
+    
+    // 1. Get the category to be deleted to know its type
+    final List<Map<String, dynamic>> cats = await db.query(
+      'categories',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    
+    if (cats.isNotEmpty) {
+      final type = cats.first['type'];
+      final targetFallbackId = fallbackId ?? 
+          (type == 'income' ? 'cat_lainnya_income' : 'cat_lainnya_expense');
+
+      // 2. Get fallback category details to update transactions denormalized data
+      final List<Map<String, dynamic>> fallbacks = await db.query(
+        'categories',
+        where: 'id = ?',
+        whereArgs: [targetFallbackId],
+      );
+
+      if (fallbacks.isNotEmpty) {
+        final f = fallbacks.first;
+        // 3. Update transactions to fallback category
+        await db.update(
+          'transactions',
+          {
+            'categoryId': f['id'],
+            'categoryName': f['name'],
+            'categoryIcon': f['icon'],
+            'categoryColor': f['color'],
+          },
+          where: 'categoryId = ?',
+          whereArgs: [id],
+        );
+      }
+    }
+
+    // 4. Finally delete the category
     return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -270,6 +315,17 @@ class DatabaseHelper {
 
   Future<int> deleteAccount(String id) async {
     final db = await database;
+    
+    // 1. Set accountId to null for all transactions in this account
+    // This preserves the transaction data while removing the link to the deleted account
+    await db.update(
+      'transactions',
+      {'accountId': null},
+      where: 'accountId = ?',
+      whereArgs: [id],
+    );
+
+    // 2. Delete the account
     return await db.delete('accounts', where: 'id = ?', whereArgs: [id]);
   }
 

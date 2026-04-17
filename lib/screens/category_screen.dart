@@ -122,7 +122,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                                     color:
                                         _selectedType == TransactionType.expense
                                             ? c.expense
-                                            : Colors.grey.shade200,
+                                            : c.divider,
                                     width: 2,
                                   ),
                                   boxShadow: [
@@ -172,7 +172,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                                     color:
                                         _selectedType == TransactionType.income
                                             ? c.income
-                                            : Colors.grey.shade200,
+                                            : c.divider,
                                     width: 2,
                                   ),
                                   boxShadow: [
