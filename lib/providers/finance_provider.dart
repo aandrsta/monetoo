@@ -30,7 +30,6 @@ class FinanceProvider extends ChangeNotifier {
   List<AccountModel> get regularAccounts =>
       _accounts.where((a) => a.type != AccountType.savings).toList();
 
-
   double get totalIncome => _transactions
       .where((t) => t.type == TransactionType.income)
       .fold(0, (sum, t) => sum + t.amount);
@@ -81,7 +80,6 @@ class FinanceProvider extends ChangeNotifier {
     }
   }
 
-
   Future<List<TransactionModel>> getTransactionsByMonth(
       int year, int month) async {
     return await _db.getTransactionsByMonth(year, month);
@@ -128,7 +126,6 @@ class FinanceProvider extends ChangeNotifier {
     await loadCategories();
   }
 
-
   // ===== ACCOUNTS =====
 
   Future<void> addAccount(AccountModel account) async {
@@ -168,5 +165,27 @@ class FinanceProvider extends ChangeNotifier {
         .fold(0.0, (s, t) => s + t.amount);
 
     return account.openingBalance + income - expense;
+  }
+
+  double getOpeningBalanceForMonth(int year, int month) {
+    final startOfMonth = DateTime(year, month, 1);
+
+    // Total opening balance of all accounts
+    final totalInitialBalance =
+        _accounts.fold(0.0, (sum, a) => sum + a.openingBalance);
+
+    // Sum of transactions before this month
+    final historicalTransactions =
+        _transactions.where((t) => t.date.isBefore(startOfMonth));
+
+    final income = historicalTransactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final expense = historicalTransactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    return totalInitialBalance + income - expense;
   }
 }

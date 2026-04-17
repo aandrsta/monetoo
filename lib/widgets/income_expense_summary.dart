@@ -5,17 +5,19 @@ import '../utils/currency_formatter.dart';
 class IncomeExpenseSummary extends StatelessWidget {
   final double income;
   final double expense;
+  final double? balance;
 
   const IncomeExpenseSummary({
     super.key,
     required this.income,
     required this.expense,
+    this.balance,
   });
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final balance = income - expense;
+    final displayBalance = balance ?? (income - expense);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -40,7 +42,7 @@ class IncomeExpenseSummary extends StatelessWidget {
           _summaryBox(
             context,
             label: 'Saldo',
-            amount: balance,
+            amount: displayBalance,
             color: c.accent,
             bgColor: c.bgLight,
           ),
@@ -67,12 +69,18 @@ class IncomeExpenseSummary extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: TextStyle(fontSize: 11, color: color)),
-            Text(
-              CurrencyFormatter.formatCompact(amount),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: color,
+            const SizedBox(height: 2),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                CurrencyFormatter.formatCompact(amount),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+                maxLines: 1,
               ),
             ),
           ],

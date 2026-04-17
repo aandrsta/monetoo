@@ -78,7 +78,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       if (_editMode) ...[
                         const SizedBox(height: 12),
                         const EditModeBanner(
-                          message: 'Mode edit aktif — ketuk akun untuk ubah atau hapus',
+                          message:
+                              'Mode edit aktif — ketuk akun untuk ubah atau hapus',
                         ),
                       ],
                     ],
@@ -95,7 +96,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
   double _getAccountBalance(FinanceProvider provider, String accountId) {
     final account = provider.accounts.firstWhere((a) => a.id == accountId);
-    final txs = provider.transactions.where((t) => t.accountId == accountId).toList();
+    final txs =
+        provider.transactions.where((t) => t.accountId == accountId).toList();
     return account.openingBalance + txs.balance;
   }
 
@@ -186,8 +188,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                      child:
-                          Text(account.icon, style: TextStyle(fontSize: 26))),
+                      child: Text(account.icon,
+                          style: const TextStyle(fontSize: 26))),
                 ),
                 if (_editMode)
                   Positioned(
@@ -219,7 +221,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             color: c.textPrimary)),
                     if (account.isPrimary) ...[
                       const SizedBox(width: 6),
-                      Icon(Icons.star, size: 14, color: Colors.amber),
+                      const Icon(Icons.star, size: 14, color: Colors.amber),
                     ],
                   ]),
                   const SizedBox(height: 3),
@@ -395,7 +397,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         decoration: InputDecoration(
                           hintText: 'Contoh: Kartu, Tunai...',
                           prefixIcon: Text(icon,
-                              style: TextStyle(fontSize: 20),
+                              style: const TextStyle(fontSize: 20),
                               textAlign: TextAlign.center),
                           prefixIconConstraints:
                               const BoxConstraints(minWidth: 48, maxWidth: 48),
@@ -462,8 +464,8 @@ class _AccountScreenState extends State<AccountScreen> {
                                     width: 2),
                               ),
                               child: Center(
-                                  child:
-                                      Text(ic, style: TextStyle(fontSize: 22))),
+                                  child: Text(ic,
+                                      style: const TextStyle(fontSize: 22))),
                             ),
                           );
                         }).toList(),
@@ -509,18 +511,21 @@ class _AccountScreenState extends State<AccountScreen> {
                               final confirmed = await ConfirmDeleteSheet.show(
                                 context,
                                 title: 'Hapus Akun?',
-                                description: 'Akun "${account.name}" akan dihapus permanen.\nRiwayat transaksi tidak ikut terhapus.',
+                                description:
+                                    'Akun "${existing.name}" akan dihapus permanen.\nRiwayat transaksi tidak ikut terhapus.',
                               );
-                              if (confirmed == true) {
-                                final provider = context.read<FinanceProvider>();
-                                provider.deleteAccount(account.id);
+                              if (confirmed == true && context.mounted) {
+                                final provider =
+                                    context.read<FinanceProvider>();
+                                provider.deleteAccount(existing.id);
                                 Navigator.pop(ctx);
-                                AppToast.success(context, 'Akun berhasil dihapus');
+                                AppToast.success(
+                                    context, 'Akun berhasil dihapus');
                                 setState(() => _editMode = false);
                               }
                             },
-                            icon: Icon(Icons.delete_outline_rounded),
-                            label: Text('Hapus Akun'),
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            label: const Text('Hapus Akun'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: c.expense,
                               side: BorderSide(color: c.expense),
@@ -546,7 +551,7 @@ class _AccountScreenState extends State<AccountScreen> {
                                   double.tryParse(openingBalanceCtrl.text) ??
                                       0.0;
                             }
-                            final account = AccountModel(
+                            final newAccount = AccountModel(
                               id: existing?.id ?? const Uuid().v4(),
                               name: nameCtrl.text.trim(),
                               type: type,
@@ -557,12 +562,12 @@ class _AccountScreenState extends State<AccountScreen> {
                               createdAt: existing?.createdAt ?? DateTime.now(),
                             );
                             if (existing == null) {
-                              provider.addAccount(account);
+                              provider.addAccount(newAccount);
                               Navigator.pop(ctx);
                               AppToast.success(
                                   context, 'Akun berhasil ditambahkan');
                             } else {
-                              provider.updateAccount(account);
+                              provider.updateAccount(newAccount);
                               Navigator.pop(ctx);
                               AppToast.success(
                                   context, 'Akun berhasil diperbarui');
@@ -577,7 +582,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             existing == null
                                 ? 'Tambah akun'
                                 : 'Simpan perubahan',
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -592,7 +597,6 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
     );
   }
-
 
   Widget _typeChip(String label, AccountType type, AccountType selected,
       Function(AccountType) onTap) {
@@ -617,4 +621,3 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 }
-

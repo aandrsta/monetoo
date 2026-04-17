@@ -8,7 +8,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
-import 'app_theme.dart';
 import 'app_toast.dart';
 
 class UpdateChecker {
@@ -17,7 +16,6 @@ class UpdateChecker {
   static const _apiUrl =
       'https://api.github.com/repos/$_repoOwner/$_repoName/releases/latest';
 
-  // Dipanggil otomatis saat app buka — silent, tidak ada feedback kalau up to date
   static Future<void> check(BuildContext context) async {
     try {
       final dio = Dio();
@@ -49,7 +47,6 @@ class UpdateChecker {
     } catch (_) {}
   }
 
-  // Dipanggil manual dari halaman Settings — kasih feedback ke user
   static Future<void> checkManual(BuildContext context) async {
     try {
       final dio = Dio();
@@ -122,10 +119,6 @@ class UpdateChecker {
   }
 }
 
-// ─────────────────────────────────────────────
-// UPDATE SHEET
-// ─────────────────────────────────────────────
-
 class _UpdateSheet extends StatefulWidget {
   final String version;
   final String downloadUrl;
@@ -161,7 +154,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
     });
 
     try {
-      // 1. Minta izin install dari sumber tidak dikenal (Android 8+)
       if (Platform.isAndroid) {
         final status = await Permission.requestInstallPackages.request();
         if (!status.isGranted) {
@@ -170,18 +162,15 @@ class _UpdateSheetState extends State<_UpdateSheet> {
         }
       }
 
-      // 2. Tentukan path penyimpanan APK
       final dir = await getExternalStorageDirectory() ??
           await getApplicationDocumentsDirectory();
       final savePath = '${dir.path}/monetoo_update.apk';
 
-      // Hapus file lama jika ada
       final file = File(savePath);
       if (await file.exists()) await file.delete();
 
       setState(() => _statusText = 'Mengunduh...');
 
-      // 3. Download APK dengan progress
       final dio = Dio();
       await dio.download(
         widget.downloadUrl,
@@ -202,7 +191,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
       if (!mounted) return;
       setState(() => _statusText = 'Membuka installer...');
 
-      // 4. Buka installer Android native lewat open_file
       final result = await OpenFile.open(
         savePath,
         type: 'application/vnd.android.package-archive',
@@ -240,13 +228,12 @@ class _UpdateSheetState extends State<_UpdateSheet> {
     return Container(
       decoration: BoxDecoration(
         color: c.cardBg,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
           Container(
             width: 40,
             height: 4,
@@ -254,8 +241,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
             decoration: BoxDecoration(
                 color: c.divider, borderRadius: BorderRadius.circular(2)),
           ),
-
-          // Ikon
           Container(
             width: 56,
             height: 56,
@@ -264,8 +249,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
             child: Icon(Icons.system_update_rounded, color: c.accent, size: 28),
           ),
           const SizedBox(height: 16),
-
-          // Judul
           Text(
             'Update tersedia — v${widget.version}',
             style: TextStyle(
@@ -274,8 +257,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                 color: c.textPrimary),
           ),
           const SizedBox(height: 8),
-
-          // Changelog
           if (widget.changelog.isNotEmpty)
             Text(
               widget.changelog.length > 200
@@ -286,8 +267,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                   TextStyle(fontSize: 13, color: c.textSecondary, height: 1.5),
             ),
           const SizedBox(height: 20),
-
-          // Progress bar — hanya muncul saat download
           if (_isDownloading) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -305,11 +284,8 @@ class _UpdateSheetState extends State<_UpdateSheet> {
             ),
             const SizedBox(height: 16),
           ],
-
-          // Tombol
           Row(
             children: [
-              // Tombol "Nanti" — hilang saat sedang download
               if (!_isDownloading) ...[
                 Expanded(
                   child: GestureDetector(
@@ -333,8 +309,6 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                 ),
                 const SizedBox(width: 12),
               ],
-
-              // Tombol download / status
               Expanded(
                 flex: 2,
                 child: GestureDetector(
@@ -356,18 +330,18 @@ class _UpdateSheetState extends State<_UpdateSheet> {
                                   fontWeight: FontWeight.w600,
                                   color: c.cardBg),
                             )
-                          :  Row(
+                          : const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.download_rounded,
-                                    color: c.cardBg, size: 20),
+                                    color: Colors.white, size: 20),
                                 SizedBox(width: 8),
                                 Text(
                                   'Download & Install',
                                   style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
-                                      color: c.cardBg),
+                                      color: Colors.white),
                                 ),
                               ],
                             ),

@@ -1,16 +1,12 @@
 // lib/screens/statistics_screen.dart
 
-import 'package:Monetoo/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
 import '../providers/finance_provider.dart';
 import '../utils/app_colors.dart';
-import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
-import '../widgets/add_transaction_bottom_sheet.dart';
-import '../widgets/transaction_tile.dart';
 import '../models/category_model.dart';
 import 'category_detail_screen.dart';
 import '../widgets/month_selector_bar.dart';
@@ -49,8 +45,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return _selectedMonth.year == now.year && _selectedMonth.month == now.month;
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -80,12 +74,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   child: MonthSelectorBar(
                     selectedMonth: _selectedMonth,
                     onChanged: (date) => setState(() => _selectedMonth = date),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: IncomeExpenseSummary(
-                    income: monthTx.totalIncome,
-                    expense: monthTx.totalExpense,
                   ),
                 ),
                 SliverToBoxAdapter(child: _buildMonthlyOverview(monthTx)),
@@ -129,7 +117,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 
-
   Widget _buildMonthlyOverview(List<TransactionModel> txs) {
     final c = context.colors;
     final income = txs.totalIncome;
@@ -165,19 +152,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   child: _statCard('Pengeluaran', expense,
                       Icons.arrow_upward_rounded, c.expense)),
             ]),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Saldo Akhir',
-                    style: TextStyle(fontSize: 14, color: c.textSecondary)),
-                Text(CurrencyFormatter.format(balance),
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: balance >= 0 ? c.income : c.expense)),
-              ],
-            ),
+            const SizedBox(height: 4),
           ],
         ),
       ),
@@ -220,11 +195,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       }
     }
 
-    // Tanggal hari ini (hanya relevan kalau bulan yang dipilih = bulan ini)
     final now = DateTime.now();
     final todayIdx = _isCurrentMonth ? now.day - 1 : -1;
 
-    // Subtitle: tanggal hari ini
     final todayLabel = _isCurrentMonth
         ? 'Hari ini: ${DateFormatter.formatShort(now)}'
         : DateFormatter.formatMonthYear(_selectedMonth);
@@ -239,7 +212,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header + subtitle ──
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
@@ -283,10 +255,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 12),
-
-            // ── Tab selector ──
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
@@ -303,17 +272,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 12),
-
-            // ── PageView chart ──
             SizedBox(
               height: 220,
               child: PageView(
                 controller: _chartPageController,
                 onPageChanged: (i) => setState(() => _chartTab = i),
                 children: [
-                  // Halaman 0: Pengeluaran
                   _chartPage(
                     data: dailyExpense,
                     color: c.expense,
@@ -321,7 +286,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     todayIdx: todayIdx,
                     label: 'Pengeluaran',
                   ),
-                  // Halaman 1: Pemasukan
                   _chartPage(
                     data: dailyIncome,
                     color: c.income,
@@ -332,8 +296,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ],
               ),
             ),
-
-            // ── Dot indicator ──
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Row(
@@ -427,7 +389,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Mini summary
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
             child: Row(
@@ -452,7 +413,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   fitInsideHorizontally: true,
                   fitInsideVertically: true,
-                  tooltipBgColor: const Color(0xFF111827),
+                  tooltipBgColor: c.textPrimary,
                   getTooltipItem: (group, _, rod, __) {
                     final day = group.x + 1;
                     final isToday = todayIdx == group.x;
@@ -487,7 +448,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     getTitlesWidget: (value, _) {
                       final day = value.toInt() + 1;
                       final isToday = value.toInt() == todayIdx;
-                      // Tampilkan: hari pertama, terakhir, kelipatan 5, dan hari ini
                       final show = day == 1 ||
                           day == totalDays ||
                           day % 5 == 0 ||
@@ -496,7 +456,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       return Text(
                         isToday ? '●' : '$day',
                         style: TextStyle(
-                          fontSize: isToday ? 10 : 10,
+                          fontSize: 10,
                           fontWeight:
                               isToday ? FontWeight.w700 : FontWeight.w400,
                           color: isToday ? color : c.textSecondary,
@@ -513,7 +473,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                         barRods: [
                           BarChartRodData(
                             toY: data[i],
-                            // Bar hari ini dikasih warna lebih terang
                             color: i == todayIdx
                                 ? color
                                 : color.withValues(alpha: 0.65),
@@ -562,14 +521,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         map[t.categoryName] = CategoryStatData(
           name: t.categoryName,
           icon: t.categoryIcon,
-          color: currentColor.value,
+          color: currentColor.toARGB32(),
           amount: 0,
         );
       } else {
         map[t.categoryName] = CategoryStatData(
           name: map[t.categoryName]!.name,
           icon: map[t.categoryName]!.icon,
-          color: currentColor.value,
+          color: currentColor.toARGB32(),
           amount: map[t.categoryName]!.amount,
         );
       }
@@ -682,7 +641,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 width: 10,
                                 height: 10,
                                 decoration: BoxDecoration(
-                                    color: Color(cat.color), shape: BoxShape.circle),
+                                    color: Color(cat.color),
+                                    shape: BoxShape.circle),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
@@ -735,7 +695,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                               borderRadius: BorderRadius.circular(10)),
                           child: Center(
                               child: Text(cat.icon,
-                                  style: TextStyle(fontSize: 19))),
+                                  style: const TextStyle(fontSize: 19))),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -768,8 +728,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 child: LinearProgressIndicator(
                                   value: pct,
                                   minHeight: 6,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(Color(cat.color)),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(cat.color)),
                                   backgroundColor: c.divider,
                                 ),
                               ),
@@ -822,4 +782,3 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     );
   }
 }
-
