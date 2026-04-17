@@ -1,5 +1,6 @@
 // lib/screens/transaction_screen.dart
 
+import '../utils/app_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction_model.dart';
@@ -29,15 +30,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
     return Scaffold(
       backgroundColor: c.surface,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 0),
+        padding: const EdgeInsets.only(bottom: 16),
         child: FloatingActionButton.extended(
           onPressed: () => AddTransactionBottomSheet.show(context),
           icon: const Icon(Icons.add_rounded),
           label: const Text('Tambah'),
           backgroundColor: c.accent,
           foregroundColor: c.cardBg,
-          elevation: 0,
-          highlightElevation: 0,
+          elevation: 4,
+          highlightElevation: 8,
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -66,19 +67,27 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   selectedFilter: _filter,
                   onChanged: (value) => setState(() => _filter = value),
                 ),
-                FutureBuilder<List<TransactionModel>>(
-                  future: provider.getTransactionsByMonth(
-                      _selectedMonth.year, _selectedMonth.month),
-                  builder: (context, snapshot) {
-                    final all = snapshot.data ?? [];
+                Builder(
+                  builder: (context) {
+                    final all = provider.transactions
+                        .where((t) =>
+                            t.date.year == _selectedMonth.year &&
+                            t.date.month == _selectedMonth.month)
+                        .toList();
                     final filtered = _applyFilter(all);
-                    
+
+                    final openingBalance = provider.getOpeningBalanceForMonth(
+                        _selectedMonth.year, _selectedMonth.month);
+                    final currentBalance =
+                        openingBalance + all.totalIncome - all.totalExpense;
+
                     return Expanded(
                       child: Column(
                         children: [
                           IncomeExpenseSummary(
                             income: all.totalIncome,
                             expense: all.totalExpense,
+                            balance: currentBalance,
                           ),
                           if (filtered.isEmpty)
                             Expanded(child: _buildEmpty())
@@ -86,7 +95,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
                             Expanded(
                               child: _buildGroupedList(filtered, provider),
                             ),
-                          const SizedBox(height: 80),
                         ],
                       ),
                     );
@@ -168,8 +176,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: TransactionTile(
                     transaction: t,
-                    onDelete: () => provider.deleteTransaction(t.id),
-                    onEdit: () => AddTransactionBottomSheet.show(context, transaction: t),
+                    onDelete: () {
+                      provider.deleteTransaction(t.id);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (context.mounted) {
+                          AppToast.success(context, 'Transaksi berhasil dihapus');
+                        }
+                      });
+                    },
+                    onEdit: () =>
+                        AddTransactionBottomSheet.show(context, transaction: t),
                   ),
                 )),
           ],

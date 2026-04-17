@@ -179,7 +179,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(label,
                 style: TextStyle(fontSize: 14, color: c.textPrimary)),
           ),
-          Text(value, style: TextStyle(fontSize: 14, color: c.textSecondary)),
+          Flexible(
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 14, color: c.textSecondary),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
@@ -243,32 +249,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(
-                isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                color: c.accent,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Mode Gelap',
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: c.textPrimary),
+          Expanded(
+            child: Row(
+              children: [
+                Icon(
+                  isDarkMode
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  color: c.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mode Gelap',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: c.textPrimary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isDarkMode ? 'Aktif' : 'Nonaktif',
+                        style: TextStyle(fontSize: 12, color: c.textSecondary),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isDarkMode ? 'Aktif' : 'Nonaktif',
-                    style: TextStyle(fontSize: 12, color: c.textSecondary),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
           Switch(
             value: isDarkMode,

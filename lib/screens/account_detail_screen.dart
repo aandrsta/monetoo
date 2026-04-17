@@ -11,9 +11,6 @@ import '../widgets/add_transaction_bottom_sheet.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/income_expense_summary.dart';
 import '../widgets/transaction_filter_chips.dart';
-import '../utils/app_toast.dart';
-import '../widgets/common/bottom_sheet_handle.dart';
-import '../models/transaction_model.dart';
 
 class AccountDetailScreen extends StatefulWidget {
   final AccountModel account;
@@ -107,13 +104,17 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
-                                    color: allTx.balance >= 0 ? c.income : c.expense),
+                                    color: allTx.balance >= 0
+                                        ? c.income
+                                        : c.expense),
                               ),
                               Text(
                                 allTx.balance >= 0 ? 'Surplus' : 'Defisit',
                                 style: TextStyle(
                                     fontSize: 11,
-                                    color: allTx.balance >= 0 ? c.income : c.expense),
+                                    color: allTx.balance >= 0
+                                        ? c.income
+                                        : c.expense),
                               ),
                             ],
                           ),
@@ -158,8 +159,11 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: TransactionTile(
                                 transaction: tx,
-                                onDelete: () => provider.deleteTransaction(tx.id),
-                                onEdit: () => AddTransactionBottomSheet.show(context, transaction: tx),
+                                onDelete: () =>
+                                    provider.deleteTransaction(tx.id),
+                                onEdit: () => AddTransactionBottomSheet.show(
+                                    context,
+                                    transaction: tx),
                               ),
                             );
                           },

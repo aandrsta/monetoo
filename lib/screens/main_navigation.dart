@@ -1,7 +1,6 @@
 // lib/screens/main_navigation.dart
 
 import 'package:flutter/material.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import '../utils/app_colors.dart';
 import '../utils/update_checker.dart';
 import 'transaction_screen.dart';
@@ -58,49 +57,46 @@ class _MainNavigationState extends State<MainNavigation> {
         },
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: c.navBarBg,
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 20,
-              color: Colors.black.withValues(alpha: 0.1),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
-            child: GNav(
-              rippleColor: c.accent.withValues(alpha: 0.15),
-              hoverColor: c.accent.withValues(alpha: 0.1),
-              gap: 8,
-              activeColor: c.accent,
-              iconSize: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              duration: const Duration(milliseconds: 400),
-              tabBackgroundColor: c.accent.withValues(alpha: 0.1),
-              color: c.textSecondary,
-              tabs: const [
-                GButton(
-                    icon: Icons.account_balance_wallet_rounded, text: 'Akun'),
-                GButton(icon: Icons.receipt_long_rounded, text: 'Transaksi'),
-                GButton(icon: Icons.category_rounded, text: 'Kategori'),
-                GButton(icon: Icons.bar_chart_rounded, text: 'Statistik'),
-                GButton(icon: Icons.settings_rounded, text: 'Pengaturan'),
-              ],
-              selectedIndex: _currentIndex,
-              onTabChange: (index) {
-                setState(() => _currentIndex = index);
-                _pageController.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              },
-            ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: c.navBarBg,
+        selectedItemColor: c.accent,
+        unselectedItemColor: c.textSecondary,
+        selectedLabelStyle:
+            const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        unselectedLabelStyle:
+            const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet_rounded),
+            label: 'Akun',
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.receipt_long_rounded),
+            label: 'Transaksi',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category_rounded),
+            label: 'Kategori',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_rounded),
+            label: 'Statistik',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_rounded),
+            label: 'Setelan',
+          ),
+        ],
       ),
     );
   }

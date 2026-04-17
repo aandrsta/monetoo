@@ -131,20 +131,17 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             ),
             Container(
               color: c.cardBg,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _sortChip('Terbaru', 'date_desc', color),
-                    const SizedBox(width: 8),
-                    _sortChip('Terlama', 'date_asc', color),
-                    const SizedBox(width: 8),
-                    _sortChip('Terbesar', 'amount_desc', color),
-                    const SizedBox(width: 8),
-                    _sortChip('Terkecil', 'amount_asc', color),
-                  ],
-                ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(child: _sortChip('Terbaru', 'date_desc', color)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _sortChip('Terlama', 'date_asc', color)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _sortChip('Terbesar', 'amount_desc', color)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _sortChip('Terkecil', 'amount_asc', color)),
+                ],
               ),
             ),
             Container(height: 1, color: c.divider),
@@ -155,26 +152,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                           style:
                               TextStyle(fontSize: 14, color: c.textSecondary)))
                   : Consumer<FinanceProvider>(
-                      builder: (context, provider, _) => ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        itemCount: txs.length,
-                        itemBuilder: (context, index) {
-                          final tx = txs[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: TransactionTile(
-                              transaction: tx,
-                              onDelete: () {
-                                provider.deleteTransaction(tx.id);
-                                AppToast.success(
-                                    context, 'Transaksi berhasil dihapus');
-                                Navigator.pop(context);
-                              },
-                              onEdit: () => AddTransactionBottomSheet.show(context, transaction: tx),
-                            ),
-                          );
-                        },
-                      ),
+                      builder: (context, provider, _) =>
+                          _buildList(txs, provider),
                     ),
             ),
           ],
@@ -210,7 +189,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     return GestureDetector(
       onTap: () => setState(() => _sort = value),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        height: 34,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: isSelected ? color : c.bgLight,
           borderRadius: BorderRadius.circular(20),
@@ -218,11 +199,79 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             color: isSelected ? c.cardBg : c.textSecondary,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildList(List<TransactionModel> txs, FinanceProvider provider) {
+    final isChronological = _sort == 'date_desc' || _sort == 'date_asc';
+
+    if (isChronological) {
+      final groups = txs.groupByDate();
+      final sortedKeys = groups.keys.toList();
+      if (_sort == 'date_desc') {
+        sortedKeys.sort((a, b) => b.compareTo(a));
+      } else {
+        sortedKeys.sort((a, b) => a.compareTo(b));
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        itemCount: sortedKeys.length,
+        itemBuilder: (context, index) {
+          final key = sortedKeys[index];
+          final dayTransactions = groups[key]!;
+          final date = dayTransactions.first.date;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  DateFormatter.formatShort(date),
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.colors.textSecondary),
+                ),
+              ),
+              ...dayTransactions.map((tx) => _buildTile(tx, provider, false)),
+            ],
+          );
+        },
+      );
+    }
+
+    // Flat list for amount sorting
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      itemCount: txs.length,
+      itemBuilder: (context, index) => _buildTile(txs[index], provider, true),
+    );
+  }
+
+  Widget _buildTile(
+      TransactionModel tx, FinanceProvider provider, bool showDate) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: TransactionTile(
+        transaction: tx,
+        showDate: showDate,
+        onDelete: () {
+          provider.deleteTransaction(tx.id);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              AppToast.success(context, 'Transaksi berhasil dihapus');
+            }
+          });
+        },
+        onEdit: () => AddTransactionBottomSheet.show(context, transaction: tx),
       ),
     );
   }

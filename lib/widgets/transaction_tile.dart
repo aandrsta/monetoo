@@ -13,12 +13,14 @@ class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final bool showDate;
 
   const TransactionTile({
     super.key,
     required this.transaction,
     required this.onDelete,
     required this.onEdit,
+    this.showDate = false,
   });
 
   @override
@@ -49,11 +51,12 @@ class TransactionTile extends StatelessWidget {
       confirmDismiss: (_) async => await ConfirmDeleteSheet.show(
         context,
         title: 'Hapus Transaksi?',
-        description: 'Transaksi ini akan dihapus permanen\ndan tidak bisa dikembalikan.',
+        description:
+            'Transaksi ini akan dihapus permanen\ndan tidak bisa dikembalikan.',
       ),
       onDismissed: (_) {
         onDelete();
-        AppToast.success(context, 'Transaksi berhasil dihapus');
+        // Toast is now handled by parent to avoid unmounted context warning
       },
       child: GestureDetector(
         onTap: onEdit,
@@ -156,7 +159,9 @@ class TransactionTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    DateFormatter.formatTime(transaction.date),
+                    showDate
+                        ? '${DateFormatter.formatDayShort(transaction.date)} • ${DateFormatter.formatTime(transaction.date)}'
+                        : DateFormatter.formatTime(transaction.date),
                     style: TextStyle(
                       fontSize: 10,
                       color: c.textSecondary,

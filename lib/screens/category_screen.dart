@@ -1,15 +1,19 @@
+// lib/screens/category_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/category_model.dart';
 import '../models/transaction_model.dart';
 import '../providers/finance_provider.dart';
 import '../utils/app_colors.dart';
+import '../utils/app_toast.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/add_transaction_bottom_sheet.dart';
 import '../utils/icon_data.dart';
 import '../widgets/category_edit_sheet.dart';
 import '../widgets/confirm_delete_category_sheet.dart';
-
+import '../widgets/edit_mode_widgets.dart';
+import '../widgets/month_selector_bar.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -37,8 +41,6 @@ class _CategoryScreenState extends State<CategoryScreen>
     _tabController.dispose();
     super.dispose();
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +94,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                             onTap: () {
                               setState(() => _editMode = !_editMode);
                               if (_editMode) {
-                                AppToast.info(context, 'Ketuk kategori untuk edit');
+                                AppToast.info(
+                                    context, 'Ketuk kategori untuk edit');
                               }
                             },
                           ),
@@ -102,7 +105,8 @@ class _CategoryScreenState extends State<CategoryScreen>
 
                       MonthSelectorBar(
                         selectedMonth: _selectedMonth,
-                        onChanged: (date) => setState(() => _selectedMonth = date),
+                        onChanged: (date) =>
+                            setState(() => _selectedMonth = date),
                       ),
                       const SizedBox(height: 16),
 
@@ -214,7 +218,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                       if (_editMode) ...[
                         const SizedBox(height: 12),
                         const EditModeBanner(
-                          message: 'Mode edit aktif — ketuk kategori untuk ubah atau hapus',
+                          message:
+                              'Mode edit aktif — ketuk kategori untuk ubah atau hapus',
                         ),
                       ],
                     ],
@@ -234,7 +239,6 @@ class _CategoryScreenState extends State<CategoryScreen>
 
   Widget _buildCategoryGrid(
       FinanceProvider provider, List<TransactionModel> monthlyTx) {
-    // final c = context.colors;
     final Map<String, Map<String, dynamic>> stats = {};
     for (final t in monthlyTx) {
       stats[t.categoryName] ??= {'amount': 0.0, 'count': 0, 'type': t.type};
@@ -324,7 +328,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
-                    child: Text(category.icon, style: TextStyle(fontSize: 22)),
+                    child: Text(category.icon,
+                        style: const TextStyle(fontSize: 22)),
                   ),
                 ),
                 if (isEditMode)
@@ -432,4 +437,3 @@ class _CategoryScreenState extends State<CategoryScreen>
     );
   }
 }
-
